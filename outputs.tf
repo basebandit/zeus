@@ -66,3 +66,51 @@ output "nat_gateway_id" {
   value       = aws_nat_gateway.nat.id
   description = "ID of the NAT Gateway"
 }
+
+# ===================================================
+# EKS
+# ===================================================
+output "eks_cluster_name" {
+  value       = aws_eks_cluster.eks.name
+  description = "Name of the EKS cluster"
+}
+
+output "eks_cluster_endpoint" {
+  value       = aws_eks_cluster.eks.endpoint
+  description = "API server endpoint of the EKS cluster"
+}
+
+output "eks_cluster_role_arn" {
+  value       = aws_iam_role.eks.arn
+  description = "IAM role ARN used by the EKS control plane"
+}
+
+output "eks_cluster_security_group_id" {
+  value       = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
+  description = "Security group ID associated with the EKS cluster"
+}
+
+output "eks_node_group_name" {
+  value       = aws_eks_node_group.general.node_group_name
+  description = "Name of the EKS node group"
+}
+
+output "eks_node_role_arn" {
+  value       = aws_iam_role.nodes.arn
+  description = "IAM role ARN assigned to the node group"
+}
+
+output "eks_node_group_autoscaling_group" {
+  value       = aws_eks_node_group.general.resources[0].autoscaling_groups[0].name
+  description = "Security group IDs used by the EKS nodes"
+}
+
+output "eks_cluster_version" {
+  value       = aws_eks_cluster.eks.version
+  description = "Kubernetes version of the EKS cluster"
+}
+
+output "eks_oidc_issuer_url" {
+  value       = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+  description = "OIDC issuer URL used for IAM Roles for Service Accounts (IRSA)"
+}
