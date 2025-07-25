@@ -28,24 +28,24 @@ variable "cluster_version" {
 
 variable "vpc_cidr_ipv4_private_z1" {
   description = "The IP range to use for the vpc private  subnet one"
-  type = string
-  default = "10.0.0.0/19"
+  type        = string
+  default     = "10.0.0.0/19"
 }
 
 variable "vpc_cidr_ipv4_private_z2" {
   description = "The IP range to use for the vpc private  subnet two"
-  type = string
-  default = "10.0.32.0/19"
+  type        = string
+  default     = "10.0.32.0/19"
 }
 
 variable "vpc_cidr_ipv4_public_z1" {
   description = "The IP range to use for the vpc public  subnet one"
-  type = string
-  default = "10.0.64.0/19"
+  type        = string
+  default     = "10.0.64.0/19"
 }
 
 variable "vpc_cidr_ipv4_public_z2" {
   description = "The IP range to use for the vpc public  subnet two"
-  type = string
-  default = "10.0.96.0/19"
+  type        = string
+  default     = "10.0.96.0/19"
 }
