@@ -1,114 +1,129 @@
-# AWS EKS Cluster Setup (Terraform)
+# AWS EKS Cluster Setup (with ArgoCD GitOps)
 
-This project provisions a **production-grade Amazon EKS cluster** using **Terraform**. The process is broken down into two clear steps:
+This project provisions a development platform on Amazon EKS cluster using Terraform. The setup includes VPC networking, EKS control plane, worker nodes, and bootstrapping ArgoCD for GitOps workflows.
 
 ---
 
-## 🛠 Prerequisites
+## ✅ What This Project Does
+
+- Provisions a secure and scalable **VPC** with public/private subnets
+- Deploys an **Amazon EKS Cluster** with worker nodes (Node Groups)
+- Installs **ArgoCD** and **ArgoCD Image Updater** via Helm using Terraform
+- Uses **EKS Pod Identity Agent** (instead of IRSA) for managing IAM roles for service accounts
+
+---
+
+## 🧰 Prerequisites
 
 - Terraform CLI ≥ 1.3
-- AWS CLI configured with valid credentials
-- AWS IAM user or role with permissions for:
-  - VPC and networking
-  - EKS and IAM roles
+- AWS CLI configured with a profile or IAM credentials
+- kubectl configured (will be needed to interact with EKS)
+- Helm CLI (for optional local management)
 
 ---
 
-## ✅ Step 1: Provision the VPC
-
-The first step is creating a secure and scalable VPC for EKS.
-
-### 🔁 Checkout the VPC tag
-
-```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
-git checkout tags/v1.0.0
-```
-
-### 📁 VPC Files
+## 📁 Project Structure
 
 ```
 .
-├── igw.tf             # Internet Gateway
-├── locals.tf          # Local variables and AZ logic
-├── nat.tf             # NAT Gateway and EIP
-├── outputs.tf         # Terraform outputs
-├── providers.tf       # AWS provider setup
-├── routes.tf          # Route tables and associations
-├── subnets.tf         # Public and private subnets
-├── terraform.tfstate  # Terraform state file
-├── variables.tf       # Input variables
-└── vpc.tf             # Main VPC resource
+├── charts
+│   ├── argocd
+│   │   └── argocd-server
+│   │       ├── argocd-config
+│   │       ├── staging-argocd-image-updater-values.yaml
+│   │       └── staging-argocd-values.yaml
+│   └── rbac
+├── infrastructure
+│   └── staging
+│       ├── argo-image-updater.tf
+│       ├── argocd.tf
+│       ├── eks.tf
+│       ├── igw.tf
+│       ├── locals.tf
+│       ├── nat.tf
+│       ├── nodes.tf
+│       ├── outputs.tf
+│       ├── pod-identity-addon.tf
+│       ├── providers.tf
+│       ├── routes.tf
+│       ├── subnets.tf
+│       ├── terraform.tfstate
+│       ├── variables.tf
+│       └── vpc.tf
+└── README.md
 ```
 
-### 🚀 Terraform Steps
+---
+
+## 🚀 Step-by-Step Setup
+
+### ✅ Step 1: Provision the VPC (tag: `v1.0.0`)
 
 ```bash
+git checkout v1.0.0
+cd infrastructure/staging
 terraform init
-terraform plan
 terraform apply
 ```
 
-Confirm when prompted. This will provision:
-- VPC with `/16` CIDR block
-- 2 public and 2 private subnets
-- Internet Gateway
-- NAT Gateway with Elastic IP
-- Public/private route tables
-
-### 📤 Outputs
-
-After apply, Terraform will output:
-- VPC ID and CIDR block
-- Public and private subnet CIDRs
-- NAT Gateway public IP
+This sets up the VPC, subnets, NAT Gateway, Internet Gateway, and route tables.
 
 ---
 
-## 💸 Cost Warning
-
-This setup includes a **NAT Gateway**, which costs approximately **$37.96/month** when idle.  
-To avoid charges when idle:
+### ✅ Step 2: Provision the EKS Cluster (tag: `v2.0.0`)
 
 ```bash
-terraform destroy -target=aws_nat_gateway.nat -target=aws_eip.nat
+git checkout v2.0.0
+cd infrastructure/staging
+terraform init
+terraform apply
 ```
+
+This step provisions the EKS control plane, node groups (e.g. `t3.medium`), IAM roles for nodes, and enables the **EKS Pod Identity Agent** instead of traditional IRSA.
 
 ---
 
-## 🧹 Cleanup
+### ✅ Step 3: Install and Configure ArgoCD via Helm (tag: `v3.0.0`)
 
-To destroy all resources from this step:
+```bash
+git checkout v3.0.0
+cd infrastructure/staging
+terraform init
+terraform apply
+```
+
+This step deploys:
+
+- ArgoCD Helm chart
+- ArgoCD Image Updater
+- Custom values from `charts/argocd/argocd-server/*.yaml`
+- ArgoCD is deployed in the `argocd` namespace and bootstrapped for GitOps
+- Uses **Pod Identity Agent** for access to AWS (e.g., fetching ECR credentials)
+
+---
+
+## 🧹 Clean Up
+
+To tear down all infrastructure:
 
 ```bash
 terraform destroy
 ```
 
+To destroy only ArgoCD resources:
+
+```bash
+terraform destroy -target=helm_release.argocd -target=helm_release.argocd_image_updater
+```
+
 ---
 
-## 🚀 Step 2: Provision the EKS Cluster
+## 📝 Notes
 
-The next step is provisioning the actual EKS cluster using the VPC from Step 1.
+- Make sure your AWS vCPU limits can support the desired number of nodes (e.g. t3.medium).
+- Default ArgoCD configs are set to run with minimal replicas and resources. Adjust accordingly based on cluster capacity.
+- Pod scheduling issues may arise on underpowered nodes (e.g. t3.micro) due to ArgoCD controller resource limits.
 
-### 🔁 Checkout the EKS tag
+---
 
-```bash
-git checkout tags/v2.0.0
-```
-
-> This tag will include a new `eks.tf` file and any additional resources required to configure your Kubernetes control plane, worker nodes, IAM roles, and node groups.
-
-### 🚀 Terraform Steps for EKS
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-This will:
-- Create the EKS cluster in the previously created VPC
-- Set up IAM roles, security groups, and node groups
-- Output cluster name, endpoint, and authentication data
-
+Built for educational purposes, you will need a lot more configuring for a production-ready environment.
