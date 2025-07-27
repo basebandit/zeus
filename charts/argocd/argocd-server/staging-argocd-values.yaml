@@ -1,5 +1,7 @@
----
 configs:
+  secret:
+    # argocd-secret will be created via External Secrets
+    createSecret: false
   params:
     server.insecure: true # -- disable tls we will access argocd ui via ingress with a TLS certificate
 
