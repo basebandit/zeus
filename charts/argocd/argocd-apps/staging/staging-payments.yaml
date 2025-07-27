@@ -1,0 +1,73 @@
+projects:
+  - name: staging-payments-apps
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    # Finalizer that ensures that project is not deleted until it is not referenced by any application
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: A logical grouping of payments applications in the staging basebandit eks cluster
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+    destinations:
+      - namespace: "*"
+        server: https://kubernetes.default.svc
+    # Allow all cluster-scoped resources creation
+    clusterResourceWhitelist:
+      - group: "*"
+        kind: "*"
+    clusterResourceBlacklist: []
+    # Allow all namespaced-scoped resources to be created, except for ResourceQuota, LimitRange, NetworkPolicy
+    namespaceResourceBlacklist:
+      - group: ""
+        kind: ResourceQuota
+      - group: ""
+        kind: LimitRange
+      - group: ""
+        kind: NetworkPolicy
+    # Allows detecting orphaned resources, inspect/remove resources using Argo CD UI and generate a warning.
+    orphanedResources:
+      warn: false
+    roles: []
+    # TODO: Restrict creation of specific resources.
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+applications:
+  - name: payments
+    namespace: argocd
+    project: staging-payments-apps
+    additionalLabels: {}
+    additionalAnnotations:
+      argocd-image-updater.argoproj.io/image-list: payments=060309844053.dkr.ecr.eu-central-1.amazonaws.com/payments
+      argocd-image-updater.argoproj.io/payments.update-strategy: semver
+      argocd-image-updater.argoproj.io/write-back-method: git
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    revisionHistoryLimit: 10
+    source:
+      repoURL: git@github.com:basebandit/zeus.git
+      path: charts/payments
+      helm:
+        valueFiles:
+          - staging-values.yaml
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: payments
+    syncPolicy:
+      automated:
+        allowEmpty: false
+        prune: false
+        selfHeal: true
+      retry:
+        backoff:
+          duration: 5s
+          factor: 2
+          maxDuration: 3m
+        limit: 5
+      syncOptions:
+        - Validate=true
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        - PruneLast=true
+    
