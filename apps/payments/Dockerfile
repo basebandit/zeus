@@ -6,13 +6,14 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
 COPY uv.lock pyproject.toml /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --frozen --no-install-project --no-dev
+    uv sync --frozen --no-install-project --no-dev
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --frozen --no-dev
+    uv sync --frozen --no-dev
 
 FROM base
 COPY --from=builder /app /app
 ENV PATH="/app/.venv/bin:$PATH"
+WORKDIR /app
 EXPOSE 8080
-CMD ["uv", "run", "fastapi", "run","main.py","--port","8080"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
