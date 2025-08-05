@@ -1,6 +1,6 @@
 # Bootstrapping argocd server deployment
 applications:
-  - name: argocd
+  argocd:
     namespace: argocd
     additionalLabels: {}
     additionalAnnotations: {}
