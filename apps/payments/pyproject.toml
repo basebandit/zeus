@@ -8,3 +8,25 @@ dependencies = [
     "fastapi>=0.116.1",
     "uvicorn>=0.35.0",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "commitizen>=4.8.3",
+    "mypy>=1.17.1",
+    "pre-commit>=4.3.0",
+    "ruff>=0.12.8",
+]
+
+[tool.mypy]
+install_types = true
+non_interactive = true
+python_version = "3.12"
+strict = true
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver2"
+version_provider = "uv"
+update_changelog_on_bump = true
