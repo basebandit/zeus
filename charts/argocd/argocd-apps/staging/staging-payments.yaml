@@ -1,5 +1,5 @@
 projects:
-  - name: staging-payments-apps
+  staging-payments-apps:
     namespace: argocd
     additionalLabels: {}
     additionalAnnotations: {}
@@ -34,7 +34,7 @@ projects:
       - group: "*"
         kind: "*"
 applications:
-  - name: payments
+  payments:
     namespace: argocd
     project: staging-payments-apps
     additionalLabels: {}
@@ -70,4 +70,3 @@ applications:
         - CreateNamespace=true
         - PrunePropagationPolicy=foreground
         - PruneLast=true
-    
