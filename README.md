@@ -115,6 +115,21 @@ To destroy only ArgoCD resources:
 ```bash
 terraform destroy -target=helm_release.argocd -target=helm_release.argocd_image_updater
 ```
+---
+
+## 🖥️ ArgoCD UI
+
+Below are screenshots from the deployed ArgoCD instance showing the GitOps application dashboards:
+
+### 🔹 ArgoCD Dashboard (App of Apps)
+
+![ArgoCD Dashboard](./docs/assets/staging-argocd-app.png)
+
+---
+
+### 🔹 Staging Payments Application View
+
+![Payments App in Staging](./docs/assets/staging-payments-argocd-app.png)
 
 ---
 
@@ -127,3 +142,4 @@ terraform destroy -target=helm_release.argocd -target=helm_release.argocd_image_
 ---
 
 Built for educational purposes, you will need a lot more configuring for a production-ready environment.
+
