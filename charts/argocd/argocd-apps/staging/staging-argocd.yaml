@@ -10,6 +10,7 @@ applications:
     revisionHistoryLimit: 3
     sources:
       - repoURL: 'https://argoproj.github.io/argo-helm'
+        chart: argo-cd
         targetRevision: 8.2.2
         helm:
           releaseName: argocd
