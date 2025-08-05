@@ -16,7 +16,7 @@ applications:
           releaseName: argocd
           valueFiles:
             - $values/charts/argocd/argocd-server/staging-argocd-values.yaml
-      - repoURL: "git@github.com:/basebandit/zeus.git"
+      - repoURL: "git@github.com:basebandit/zeus.git"
         targetRevision: HEAD
         ref: values
       # Argocd Configuration
