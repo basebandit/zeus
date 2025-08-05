@@ -1,0 +1,68 @@
+projects:
+  staging-project-apps:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description:
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+      - "https://argoproj.github.io/argo-helm"
+    destinations:
+      - namespace: "*"
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist:
+      - group: "*"
+        kind: "*"
+    clusterResourceBlacklist: []
+    namespaceResourceBlacklist: []
+    orphanedResources:
+      warn: false
+    roles: []
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+applicationsets:
+  staging-project-app-set:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    goTemplate: true
+    generators:
+    - git:
+        repoURL: git@github.com:basebandit/zeus.git
+        revision: HEAD
+        files:
+        - path: charts/argocd/argocd-apps/staging/*.yaml
+    template:
+      metadata:
+        name: '{{ index (splitList "." .path.filenameNormalized) 0 }}'
+        labels: {}
+        annotations: {}
+      spec:
+        project: 'staging-project-apps'
+        sources:
+        - repoURL: "https://argoproj.github.io/argo-helm"
+          chart: argocd-apps
+          targetRevision: 2.0.2
+          helm:
+            valueFiles:
+              - $values/charts/argocd/argocd-apps/staging/{{ .path.filename }}
+        - repoURL: "git@github.com:basebandit/zeus.git"
+          targetRevision: HEAD
+          ref: values
+        destination:
+          server: "https://kubernetes.default.svc"
+          namespace: argocd
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+          - Validate=false
+          - PruneLast=true
+          - CreateNamespace=true
+    syncPolicy:
+      preserveResourceOnDeletion: true
+      applicationSync: create-update
