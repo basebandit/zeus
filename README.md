@@ -1,4 +1,4 @@
-# AWS EKS Cluster Setup (with ArgoCD GitOps)
+# AWS EKS Cluster Setup ( with ArgoCD for GitOps)
 
 This project provisions a development platform on Amazon EKS cluster using Terraform. The setup includes VPC networking, EKS control plane, worker nodes, and bootstrapping ArgoCD for GitOps workflows.
 
