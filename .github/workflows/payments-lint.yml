@@ -1,0 +1,61 @@
+name: Lint and Verify - Payments
+
+on:
+  push:
+    paths:
+      - "apps/payments/**"
+    branches: [main]
+  pull_request:
+    paths:
+      - "apps/payments/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  lint:
+    name: 🧹 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/payments
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for commit message checking
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: ⚡ Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: 🔄 Add uv to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install dependencies
+        run: uv sync --all-groups
+
+      - name: 📋 Run Ruff (linter)
+        run: uv run ruff check .
+
+      - name: 🎨 Run Ruff (formatter check)
+        run: uv run ruff format --check .
+
+      - name: ✅ Check commit message format (Conventional Commits)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          latest_commit="$(git log -1 --pretty=%B)"
+          echo "Checking commit: $latest_commit"
+          # Check if commitizen is available, if not skip this step
+          if uv run python -c "import commitizen" 2>/dev/null; then
+            echo "$latest_commit" | uv run cz check || (echo "❌ Invalid commit message format" && exit 1)
+          else
+            echo "⚠️ Commitizen not found in dependencies, skipping commit message check"
+          fi
