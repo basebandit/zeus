@@ -1,0 +1,47 @@
+exclude: '.git|.tox'
+repos:
+  # Shared hooks that could run on all apps (if you add more later)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^apps/
+      - id: end-of-file-fixer
+        files: ^apps/
+      - id: check-yaml
+        files: ^apps/
+      - id: check-toml
+        files: ^apps/
+
+  # App-specific hooks for payments
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        name: 'ruff (payments)'
+        args: ["--fix"]
+        files: ^apps/payments/.*\.py$
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        name: 'black (payments)'
+        files: ^apps/payments/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: mypy-payments
+        name: 'mypy (payments)'
+        entry: bash -c 'cd apps/payments && uv run mypy .'
+        language: system
+        files: ^apps/payments/.*\.py$
+        require_serial: true
+
+      - id: commitizen-check
+        name: commitizen check commit message
+        entry: bash -c 'cd apps/payments && uv run cz check --commit-msg-file "$1"' _
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true 
+        always_run: true
