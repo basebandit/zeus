@@ -14,8 +14,8 @@ on:
       - reopened
 
 jobs:
-  lint:
-    name: 🧹 Lint
+  lint-test:
+    name: 🧹 Lint & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,3 +47,14 @@ jobs:
       - name: 🎨 Run Ruff (formatter check)
         run: uv run ruff format --check .
 
+      - name: 📝 Run MyPy (type checking)
+        run: uv run mypy .
+
+      - name: ✅ Run pre-commit hooks
+        run: uv run pre-commit run --all-files
+
+      - name: 🧪 Run Pytest
+        run: uv run pytest --maxfail=1 --disable-warnings -v
+
+      - name: 📊 Generate coverage report
+        run: uv run pytest --cov=apps/payments --cov-report=xml
