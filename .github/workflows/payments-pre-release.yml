@@ -7,10 +7,7 @@ on:
         description: "Version bump type (major, minor, patch)"
         required: true
         default: "patch"
-permissions:
-  contents: write
-  pull-requests: write
-  
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -38,14 +35,17 @@ jobs:
       - name: 📦 Install commitizen & dev deps
         run: uv sync --all-groups
 
+      - name: ⚙️ Configure git user
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
       - name: 🔢 Bump version & update CHANGELOG
         run: uv run cz bump --yes --increment ${{ github.event.inputs.bump }} --changelog
 
       - name: 🆙 Push release branch
         run: |
           VERSION=$(uv run cz version --project)
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@users.noreply.github.com"
           git checkout -b payments-release/v$VERSION
           git add pyproject.toml CHANGELOG.md uv.lock || true
           git commit -m "chore(release): prepare v$VERSION"
