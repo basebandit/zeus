@@ -47,6 +47,4 @@ jobs:
         run: |
           VERSION=$(uv run cz version --project)
           git checkout -b payments-release/v$VERSION
-          git add pyproject.toml CHANGELOG.md uv.lock || true
-          git commit -m "chore(release): prepare v$VERSION"
           git push origin payments-release/v$VERSION
