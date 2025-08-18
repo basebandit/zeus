@@ -11,6 +11,9 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/payments
 
     steps:
       - name: ⬇️ Checkout code
@@ -24,10 +27,13 @@ jobs:
           python-version: "3.12"
 
       - name: ⚡ Install uv
-        run: pip install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: 🔄 Add uv to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: 📦 Install commitizen & dev deps
-        run: uv sync --dev
+        run: uv sync --all-groups
 
       - name: 🔢 Bump version & update CHANGELOG
         run: uv run cz bump --yes --increment ${{ github.event.inputs.bump }} --changelog
