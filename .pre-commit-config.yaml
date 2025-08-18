@@ -1,4 +1,4 @@
-exclude: '.git|.tox'
+exclude: '.git|.tox|__pycache__'
 repos:
   # Shared hooks that could run on all apps (if you add more later)
   - repo: https://github.com/pre-commit/pre-commit-hooks
