@@ -52,4 +52,4 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Payments ${{ github.ref_name }}
-          body_path: CHANGELOG.md
+          body_path: apps/payments/CHANGELOG.md
