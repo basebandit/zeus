@@ -1,0 +1,43 @@
+name: Prepare Release - Payments
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type (major, minor, patch)"
+        required: true
+        default: "patch"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ⚡ Install uv
+        run: pip install uv
+
+      - name: 📦 Install commitizen & dev deps
+        run: uv sync --dev
+
+      - name: 🔢 Bump version & update CHANGELOG
+        run: uv run cz bump --yes --increment ${{ github.event.inputs.bump }} --changelog
+
+      - name: 🆙 Push release branch
+        run: |
+          VERSION=$(uv run cz version --project)
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -b payments-release/v$VERSION
+          git add pyproject.toml CHANGELOG.md uv.lock || true
+          git commit -m "chore(release): prepare v$VERSION"
+          git push origin payments-release/v$VERSION
