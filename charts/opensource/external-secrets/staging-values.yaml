@@ -1,0 +1,52 @@
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoreDuringExecution:
+    - podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - external-secrets
+        topologyKey: topology.kubernetes.io/zone
+      weight: 100
+    - podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - external-secrets
+        topologyKey: app.kubernetes.io/hostname
+      weight: 50
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+webhook:
+  replicaCount: 3
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - external-secrets-webhook
+          topologyKey: topology.kubernetes.io/zone
+        weight: 100
+      - podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - external-secrets-webhook
+          topologyKey: kubernetes.io/hostname
+        weight: 50
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1

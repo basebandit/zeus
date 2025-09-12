@@ -1,0 +1,58 @@
+projects:
+  staging-opensource-apps:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: A logical grouping of opensource applications in the staging EKS cluster
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+      - "https://charts.external-secrets.io"
+    destinations:
+      - namespace: "*"
+        server: https://kubernetes.default.svc
+    # Allow all cluster-scoped resources creation
+    clusterResourceWhitelist:
+      - group: "*"
+        kind: "*"
+    clusterResourceBlacklist: []
+    namespaceResourceBlacklist: []
+    orphanedResources:
+      warn: false
+    roles: []
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+applications: 
+  external-secrets:
+    namespace: argocd
+    project: staging-opensource
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    revisionHistoryLimit: 10
+    source:
+      - repoURL: "https://charts.external-secrets.io"
+        targetRevision: 0.19.2
+        helm:
+          releaseName: external-secrets
+          valueFiles:
+            - $values/charts/opensource/external-secrets/staging-values.yaml
+      - repoURL: "git@github.com/basebandit/zeus.git"
+        ref: values
+    destination:
+      server: "https://kubernetes.default.svc"
+      namespace: external-secrets
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+    syncOptions:
+      - Validate=false
+      - PruneLast=true
+      - CreateNamespace=true
+
+
+

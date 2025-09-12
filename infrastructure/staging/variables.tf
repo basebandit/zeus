@@ -14,6 +14,12 @@ variable "aws_region" {
   default     = "eu-central-1"
 }
 
+variable "aws_profile" {
+  description = "Profile to use for authenticating to  AWS for applying kubernetes resources at bootstrap phase of argocd."
+  type        = string
+  default     = "l34n-admin"
+}
+
 variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
