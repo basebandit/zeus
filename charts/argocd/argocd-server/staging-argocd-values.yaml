@@ -6,7 +6,7 @@ configs:
     server.insecure: true # -- disable tls we will access argocd ui via ingress with a TLS certificate
 
 controller:
-  replicas: 1
+  replicas: 2
   resources:
     limits:
       cpu: 500m
