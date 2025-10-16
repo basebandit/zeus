@@ -14,3 +14,26 @@ controller:
     requests:
       cpu: 250m
       memory: 256Mi
+
+server:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+repoServer:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+redis-ha:
+  enabled: true
