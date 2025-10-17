@@ -35,12 +35,14 @@ applications:
     revisionHistoryLimit: 10
     sources:
       - repoURL: "https://charts.external-secrets.io"
+        chart: external-secrets
         targetRevision: 0.19.2
         helm:
           releaseName: external-secrets
           valueFiles:
             - $values/charts/opensource/external-secrets/staging-values.yaml
       - repoURL: "git@github.com/basebandit/zeus.git"
+        targetRevision: HEAD
         ref: values
     destination:
       server: "https://kubernetes.default.svc"
