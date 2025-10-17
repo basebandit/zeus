@@ -4,6 +4,5 @@ helm:
     value: 060309844053.dkr.ecr.eu-central-1.amazonaws.com/payments
     forcestring: true
   - name: image.tag
-    value: 0.1.1
+    value: v2.1.0
     forcestring: true
-
