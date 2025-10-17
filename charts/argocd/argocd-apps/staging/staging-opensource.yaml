@@ -55,6 +55,7 @@ applications:
       - Validate=false
       - PruneLast=true
       - CreateNamespace=true
+      - ServerSideApply=true
 
 
 
