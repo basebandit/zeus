@@ -27,7 +27,7 @@ projects:
 applications: 
   external-secrets:
     namespace: argocd
-    project: staging-opensource
+    project: staging-opensource-apps
     additionalLabels: {}
     additionalAnnotations: {}
     finalizers:
