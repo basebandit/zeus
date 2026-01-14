@@ -50,12 +50,14 @@ describe('OrderService', () => {
         {
           provide: getRepositoryToken(OrderItem),
           useValue: {
+            create: jest.fn((data) => data),
             delete: jest.fn(),
           },
         },
         {
           provide: getRepositoryToken(OrderEvent),
           useValue: {
+            create: jest.fn((data) => data),
             save: jest.fn(),
           },
         },
@@ -328,7 +330,7 @@ describe('OrderService', () => {
       );
       expect(eventService.publishOrderCancelled).toHaveBeenCalledWith(
         expect.anything(),
-        'Payment failed',
+        'payment_failed',
       );
     });
   });
@@ -361,16 +363,16 @@ describe('OrderService', () => {
       );
     });
 
-    it('should throw error if order already cancelled', async () => {
-      const cancelledOrder = {
+    it('should throw error if order is shipped', async () => {
+      const shippedOrder = {
         ...mockOrder,
-        status: OrderStatus.CANCELLED,
+        status: OrderStatus.SHIPPED,
       };
 
-      orderRepository.findOne.mockResolvedValue(cancelledOrder as Order);
+      orderRepository.findOne.mockResolvedValue(shippedOrder as Order);
 
       await expect(service.cancelOrder('order-123')).rejects.toThrow(
-        'Order cannot be cancelled',
+        'Cannot cancel order in current status',
       );
     });
   });
@@ -394,8 +396,7 @@ describe('OrderService', () => {
         totalAmount: 59.98,
       };
 
-      orderRepository.findOne.mockResolvedValue(cart as Order);
-      orderItemRepository.delete.mockResolvedValue({ affected: 1 } as any);
+      redisService.getCart.mockResolvedValue(cart as Order);
       orderRepository.save.mockResolvedValue({
         ...cart,
         items: [],
@@ -406,7 +407,7 @@ describe('OrderService', () => {
 
       expect(result.items).toHaveLength(0);
       expect(result.totalAmount).toBe(0);
-      expect(orderItemRepository.delete).toHaveBeenCalledWith('item-123');
+      expect(redisService.setCart).toHaveBeenCalledWith('user-123', expect.any(Object));
     });
   });
 
@@ -415,12 +416,10 @@ describe('OrderService', () => {
       const orders = [mockOrder];
       orderRepository.findAndCount.mockResolvedValue([orders, 1]);
 
-      const result = await service.getUserOrders('user-123', 10, 0);
+      const [resultOrders, total] = await service.getUserOrders('user-123', 10, 0);
 
-      expect(result.data).toEqual(orders);
-      expect(result.total).toBe(1);
-      expect(result.limit).toBe(10);
-      expect(result.offset).toBe(0);
+      expect(resultOrders).toEqual(orders);
+      expect(total).toBe(1);
     });
   });
 });
