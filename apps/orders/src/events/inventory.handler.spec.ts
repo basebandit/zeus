@@ -1,10 +1,11 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { InventoryEventHandler } from './inventory.handler';
 import { OrderService } from '../services/order.service';
 import {
-  InventoryReservedEvent,
   InventoryReservationFailedEvent,
+  InventoryReservedEvent,
 } from './dto/inventory-events.dto';
+import { InventoryEventHandler } from './inventory.handler';
 
 describe('InventoryEventHandler', () => {
   let handler: InventoryEventHandler;
@@ -21,7 +22,14 @@ describe('InventoryEventHandler', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .setLogger(new Logger())
+      .compile();
+
+    // Suppress logger output in tests
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
 
     handler = module.get<InventoryEventHandler>(InventoryEventHandler);
     orderService = module.get(OrderService);
@@ -111,9 +119,9 @@ describe('InventoryEventHandler', () => {
 
       orderService.cancelOrder.mockRejectedValue(new Error('Order not found'));
 
-      await expect(
-        handler.handleInventoryReservationFailed(message),
-      ).rejects.toThrow('Order not found');
+      await expect(handler.handleInventoryReservationFailed(message)).rejects.toThrow(
+        'Order not found',
+      );
     });
   });
 });

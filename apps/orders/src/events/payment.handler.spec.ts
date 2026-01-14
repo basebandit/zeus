@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Logger } from '@nestjs/common';
 import { PaymentEventHandler } from './payment.handler';
 import { OrderService } from '../services/order.service';
 import { PaymentCompletedEvent, PaymentFailedEvent } from './dto/payment-events.dto';
@@ -19,7 +20,14 @@ describe('PaymentEventHandler', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .setLogger(new Logger())
+      .compile();
+
+    // Suppress logger output in tests
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
 
     handler = module.get<PaymentEventHandler>(PaymentEventHandler);
     orderService = module.get(OrderService);
