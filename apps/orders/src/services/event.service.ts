@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Order } from '../entities/order.entity';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel } from 'amqplib';
+import { Order } from '../entities/order.entity';
 
 @Injectable()
 export class EventService {
@@ -84,10 +84,15 @@ export class EventService {
 
   private async publish(routingKey: string, message: any): Promise<void> {
     try {
-      await this.channelWrapper.publish(this.exchange, routingKey, Buffer.from(JSON.stringify(message)), {
-        contentType: 'application/json',
-        deliveryMode: 2, // persistent messages
-      });
+      await this.channelWrapper.publish(
+        this.exchange,
+        routingKey,
+        Buffer.from(JSON.stringify(message)),
+        {
+          contentType: 'application/json',
+          deliveryMode: 2, // persistent messages
+        },
+      );
       this.logger.log(`Published event: ${routingKey}`);
     } catch (error) {
       this.logger.error(`Failed to publish event ${routingKey}:`, error);
