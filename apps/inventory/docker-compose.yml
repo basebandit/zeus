@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Inventory-specific PostgreSQL (port 5433)
+  postgres:
+    image: postgres:16-alpine
+    container_name: inventory-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory
+    ports:
+      - "5433:5432"  # External:Internal - avoids conflict with orders-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Inventory-specific Redis (port 6380)
+  redis:
+    image: redis:7-alpine
+    container_name: inventory-redis
+    ports:
+      - "6380:6379"  # External:Internal - avoids conflict with orders-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # NOTE: RabbitMQ is shared across all services
+  # Use the RabbitMQ instance from orders service (localhost:5672)
+  # Do NOT run a separate RabbitMQ instance for each service
+
+  # Inventory service - only starts with "app" profile
+  inventory-service:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    environment:
+      PORT: 8082
+      HOST: 0.0.0.0
+      ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432  # Internal port
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: inventory
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379  # Internal port
+      # RabbitMQ is shared - connect to host machine's RabbitMQ
+      RABBITMQ_URL: amqp://guest:guest@host.docker.internal:5672/
+      RABBITMQ_EXCHANGE: basebandit.events
+      RUN_MIGRATIONS_ON_STARTUP: "true"
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
