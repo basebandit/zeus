@@ -1,0 +1,318 @@
+basePath: /api/v1
+definitions:
+  handler.AddStockRequest:
+    properties:
+      quantity:
+        type: integer
+    required:
+    - quantity
+    type: object
+  handler.ReleaseReservationRequest:
+    properties:
+      reason:
+        type: string
+      reservationId:
+        type: string
+    required:
+    - reservationId
+    type: object
+  handler.ReserveStockRequest:
+    properties:
+      orderId:
+        type: string
+      productId:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - orderId
+    - productId
+    - quantity
+    type: object
+  models.Inventory:
+    properties:
+      availableQuantity:
+        type: integer
+      id:
+        type: string
+      lowStockThreshold:
+        type: integer
+      product:
+        $ref: '#/definitions/models.Product'
+      productId:
+        type: string
+      reservedQuantity:
+        type: integer
+      updatedAt:
+        type: string
+      version:
+        description: For optimistic locking
+        type: integer
+      warehouseLocation:
+        type: string
+    type: object
+  models.Product:
+    properties:
+      category:
+        type: string
+      createdAt:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageUrl:
+        type: string
+      inventory:
+        $ref: '#/definitions/models.Inventory'
+      name:
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
+    - price
+    - sku
+    type: object
+  models.Reservation:
+    properties:
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      orderId:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      productId:
+        type: string
+      quantity:
+        type: integer
+      status:
+        $ref: '#/definitions/models.ReservationStatus'
+    type: object
+  models.ReservationStatus:
+    enum:
+    - active
+    - confirmed
+    - released
+    - expired
+    type: string
+    x-enum-varnames:
+    - ReservationActive
+    - ReservationConfirmed
+    - ReservationReleased
+    - ReservationExpired
+host: localhost:8082
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Inventory and product management API for the Inventory service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Inventory Service API
+  version: "1.0"
+paths:
+  /inventory/{productId}/add-stock:
+    post:
+      consumes:
+      - application/json
+      description: Add a specific quantity of stock to a product's inventory (admin
+        operation)
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: string
+      - description: Add stock request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add stock to inventory
+      tags:
+      - inventory
+  /inventory/{productId}/stock:
+    get:
+      consumes:
+      - application/json
+      description: Get current inventory details for a specific product
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get product stock information
+      tags:
+      - inventory
+  /inventory/confirm/{reservationId}:
+    post:
+      consumes:
+      - application/json
+      description: Confirm a reservation, typically when an order payment is successful
+      parameters:
+      - description: Reservation ID
+        in: path
+        name: reservationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Confirm inventory reservation
+      tags:
+      - inventory
+  /inventory/release:
+    post:
+      consumes:
+      - application/json
+      description: Release a previously made reservation, returning stock to available
+        inventory
+      parameters:
+      - description: Release reservation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReleaseReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Release inventory reservation
+      tags:
+      - inventory
+  /inventory/reserve:
+    post:
+      consumes:
+      - application/json
+      description: Reserve a specific quantity of a product for an order
+      parameters:
+      - description: Reserve stock request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReserveStockRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Reservation'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Insufficient stock or concurrency conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reserve inventory stock
+      tags:
+      - inventory
+schemes:
+- http
+- https
+swagger: "2.0"
