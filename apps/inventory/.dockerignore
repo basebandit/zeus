@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+README.md
+*.md
+.DS_Store
+vendor
+coverage
+*.test
+*.out
+.vscode
+.idea
