@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL database for Payment service (isolated on port 5434)
+  postgres:
+    image: postgres:16-alpine
+    container_name: zeus-payments-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payments
+    ports:
+      - "5434:5432"
+    volumes:
+      - payments_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - payments-network
+
+  # Payment service
+  payments:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zeus-payments-service
+    environment:
+      # App settings
+      APP_NAME: payments
+      PORT: 8083
+      HOST: 0.0.0.0
+      ENVIRONMENT: development
+
+      # Database settings (connect to postgres service)
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: payments
+
+      # RabbitMQ settings (shared with other services on host)
+      # Use host.docker.internal to connect to RabbitMQ running on host
+      RABBITMQ_URL: amqp://guest:guest@host.docker.internal:5672/
+      RABBITMQ_EXCHANGE: basebandit.events
+
+      # Payment gateway settings
+      PAYMENT_GATEWAY_SUCCESS_RATE: 0.9
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - payments-network
+
+volumes:
+  payments_postgres_data:
+    driver: local
+
+networks:
+  payments-network:
+    driver: bridge
