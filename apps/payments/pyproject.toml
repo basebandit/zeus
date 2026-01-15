@@ -1,12 +1,20 @@
 [project]
 name = "payments"
 version = "2.1.0"
-description = "Add your description here"
+description = "Payment service for Zeus e-commerce platform with event-driven architecture"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.116.1",
-    "uvicorn>=0.35.0",
+    "uvicorn[standard]>=0.35.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "alembic>=1.13.0",
+    "asyncpg>=0.29.0",
+    "aio-pika>=9.4.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "python-dotenv>=1.0.0",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [dependency-groups]
