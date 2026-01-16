@@ -77,7 +77,6 @@ class PaymentService:
         Returns:
             Payment result from gateway
         """
-        # Call payment gateway
         result = await self.gateway.process_payment(
             amount=payment.amount,
             currency=payment.currency,
