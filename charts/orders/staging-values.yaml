@@ -1,0 +1,74 @@
+# Staging environment overrides
+replicaCount: 2
+
+image:
+  repository: 060309844053.dkr.ecr.eu-central-1.amazonaws.com/orders
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+env:
+  - name: NODE_ENV
+    value: "staging"
+  - name: PORT
+    value: "8080"
+  - name: DB_HOST
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: host
+  - name: DB_PORT
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: port
+  - name: DB_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: username
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: password
+  - name: DB_NAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-db-secret
+        key: database
+  - name: REDIS_HOST
+    valueFrom:
+      secretKeyRef:
+        name: orders-redis-secret
+        key: host
+  - name: REDIS_PORT
+    valueFrom:
+      secretKeyRef:
+        name: orders-redis-secret
+        key: port
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: orders-redis-secret
+        key: password
+        optional: true
+  - name: RABBITMQ_URL
+    valueFrom:
+      secretKeyRef:
+        name: orders-rabbitmq-secret
+        key: url

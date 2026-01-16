@@ -38,7 +38,7 @@ async def create_payment(
         amount=payment_data.amount,
         currency=payment_data.currency,
         payment_method=payment_data.payment_method,
-        metadata=payment_data.metadata,
+        metadata=payment_data.payment_metadata,
     )
 
     return payment
