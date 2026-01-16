@@ -78,9 +78,11 @@ async def handle_inventory_reserved(event_data: dict[str, Any]) -> None:
                         amount=Decimal(str(payment.amount)),
                         currency=str(payment.currency),
                         paymentMethod=str(payment.payment_method),
-                        paymentGatewayId=str(payment.payment_gateway_id)
-                        if payment.payment_gateway_id
-                        else None,
+                        paymentGatewayId=(
+                            str(payment.payment_gateway_id)
+                            if payment.payment_gateway_id
+                            else None
+                        ),
                         timestamp=datetime.now(timezone.utc),
                     )
 
