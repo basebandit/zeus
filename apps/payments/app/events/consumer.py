@@ -81,7 +81,7 @@ class EventConsumer:
 
             logger.info("Event consumer started, waiting for messages...")
             logger.info(f"Queue: {self.queue.name}")
-            logger.info(f"Binding: inventory.reserved")
+            logger.info("Binding: inventory.reserved")
 
             # Start consuming
             await self.queue.consume(lambda msg: self._process_message(msg, message_handler))
@@ -133,7 +133,7 @@ class EventConsumer:
                     await self._retry_message(message, retry_count)
                 else:
                     # Max retries exceeded, send to DLQ
-                    logger.error(f"Max retries exceeded, sending to DLQ")
+                    logger.error("Max retries exceeded, sending to DLQ")
                     # Message will automatically go to DLQ on reject
 
                 # Reject message (will go to DLQ if max retries exceeded)

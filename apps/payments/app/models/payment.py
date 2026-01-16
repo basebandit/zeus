@@ -1,5 +1,3 @@
-from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 from uuid import uuid4
 
@@ -8,7 +6,6 @@ from sqlalchemy import (
     String,
     Numeric,
     DateTime,
-    Index,
     Text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB

@@ -16,7 +16,7 @@ from app.events.schemas import (
     PaymentCompletedEvent,
     PaymentFailedEvent,
 )
-from app.models.payment import Payment, PaymentStatus
+from app.models.payment import PaymentStatus
 from app.services.payment_gateway import PaymentGateway, PaymentResult
 from app.services.payment_service import PaymentService
 

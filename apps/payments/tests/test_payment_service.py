@@ -5,7 +5,7 @@ Uses mocking for database and gateway to test business logic in isolation.
 """
 
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
