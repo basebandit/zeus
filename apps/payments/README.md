@@ -42,6 +42,18 @@ make dev  # Development with auto-reload
 make docker-up  # Docker
 ```
 
+### Running the Full System Locally
+
+To test the complete payment flow, run all services (Orders, Inventory, Payments) along with RabbitMQ and their databases:
+
+![Local Development Setup](docs/local-development.png)
+
+The screenshot shows:
+- **Top-left**: Orders service creating an order and querying the payment
+- **Top-right**: Inventory service (Go) reserving stock and publishing events
+- **Bottom-left**: Orders service logs showing event publishing
+- **Bottom-right**: Payments service processing the `inventory.reserved` event and completing payment
+
 ## API Endpoints
 
 - `GET /healthz` - Health check
