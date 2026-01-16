@@ -1,24 +1,18 @@
 """
 Pytest configuration and fixtures.
+
+Uses mocking for database operations to test business logic in isolation.
 """
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from decimal import Decimal
+from typing import Generator
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from app.db.base import Base
-from app.models.payment import Payment
-
-
-# Create in-memory SQLite database for testing
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+from app.models.payment import Payment, PaymentStatus
 
 
 @pytest.fixture(scope="session")
@@ -29,33 +23,16 @@ def event_loop() -> Generator:
     loop.close()
 
 
-@pytest_asyncio.fixture
-async def test_db_engine():
-    """Create test database engine."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield engine
-
-    await engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create test database session."""
-    async_session = sessionmaker(
-        test_db_engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with async_session() as session:
-        yield session
-        await session.rollback()
+@pytest.fixture
+def mock_db_session():
+    """Create a mock database session."""
+    session = AsyncMock()
+    session.add = MagicMock()
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+    session.refresh = AsyncMock()
+    session.execute = AsyncMock()
+    return session
 
 
 @pytest.fixture
@@ -64,8 +41,22 @@ def sample_payment_data():
     return {
         "order_id": uuid4(),
         "user_id": uuid4(),
-        "amount": 99.99,
+        "amount": Decimal("99.99"),
         "currency": "USD",
         "payment_method": "credit_card",
-        "status": "pending",
+        "status": PaymentStatus.PENDING,
     }
+
+
+@pytest.fixture
+def sample_payment(sample_payment_data):
+    """Create a sample Payment object."""
+    return Payment(
+        id=uuid4(),
+        order_id=sample_payment_data["order_id"],
+        user_id=sample_payment_data["user_id"],
+        amount=sample_payment_data["amount"],
+        currency=sample_payment_data["currency"],
+        payment_method=sample_payment_data["payment_method"],
+        status=sample_payment_data["status"],
+    )

@@ -18,11 +18,13 @@ async def test_payment_gateway_success():
         amount=Decimal("100.00"),
         currency="USD",
         payment_method="credit_card",
-        metadata={"order_id": "test-order-123"},
+        order_id="test-order-123",
+        user_id="test-user-123",
+        metadata={"test": "data"},
     )
 
     assert result.success is True
-    assert result.transaction_id is not None
+    assert result.gateway_transaction_id is not None
     assert result.error_code is None
     assert result.error_message is None
 
@@ -36,11 +38,12 @@ async def test_payment_gateway_failure():
         amount=Decimal("100.00"),
         currency="USD",
         payment_method="credit_card",
-        metadata={"order_id": "test-order-123"},
+        order_id="test-order-123",
+        user_id="test-user-123",
     )
 
     assert result.success is False
-    assert result.transaction_id is None
+    assert result.gateway_transaction_id is None
     assert result.error_code is not None
     assert result.error_message is not None
 
@@ -57,7 +60,8 @@ async def test_payment_gateway_different_methods():
             amount=Decimal("50.00"),
             currency="USD",
             payment_method=method,
-            metadata={},
+            order_id="test-order-123",
+            user_id="test-user-123",
         )
         assert result.success is True
 
@@ -74,7 +78,8 @@ async def test_payment_gateway_currencies():
             amount=Decimal("100.00"),
             currency=currency,
             payment_method="credit_card",
-            metadata={},
+            order_id="test-order-123",
+            user_id="test-user-123",
         )
         assert result.success is True
 
@@ -91,7 +96,8 @@ async def test_payment_gateway_processing_delay():
         amount=Decimal("100.00"),
         currency="USD",
         payment_method="credit_card",
-        metadata={},
+        order_id="test-order-123",
+        user_id="test-user-123",
     )
     duration = time.time() - start
 
@@ -110,17 +116,18 @@ async def test_refund_payment():
         amount=Decimal("100.00"),
         currency="USD",
         payment_method="credit_card",
-        metadata={},
+        order_id="test-order-123",
+        user_id="test-user-123",
     )
 
     # Refund the payment
     refund_result = await gateway.refund_payment(
-        transaction_id=payment_result.transaction_id,
+        gateway_transaction_id=payment_result.gateway_transaction_id,
         amount=Decimal("100.00"),
     )
 
     assert refund_result.success is True
-    assert refund_result.transaction_id is not None
+    assert refund_result.gateway_transaction_id is not None
 
 
 @pytest.mark.asyncio
@@ -133,12 +140,13 @@ async def test_partial_refund():
         amount=Decimal("100.00"),
         currency="USD",
         payment_method="credit_card",
-        metadata={},
+        order_id="test-order-123",
+        user_id="test-user-123",
     )
 
     # Partial refund
     refund_result = await gateway.refund_payment(
-        transaction_id=payment_result.transaction_id,
+        gateway_transaction_id=payment_result.gateway_transaction_id,
         amount=Decimal("50.00"),
     )
 

@@ -1,15 +1,22 @@
 """
-Unit tests for Event Handlers.
+Unit tests for Event Handlers and Event Schemas.
+
+Tests event schema validation and serialization without database dependencies.
 """
 
 from decimal import Decimal
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.events.schemas import InventoryReservedEvent, ReservedInventoryItem
-from app.models.payment import PaymentStatus
+from app.events.schemas import (
+    InventoryReservedEvent,
+    ReservedInventoryItem,
+    PaymentCompletedEvent,
+    PaymentFailedEvent,
+)
+from app.models.payment import Payment, PaymentStatus
 from app.services.payment_gateway import PaymentGateway, PaymentResult
 from app.services.payment_service import PaymentService
 
@@ -40,92 +47,52 @@ async def test_inventory_reserved_event_schema():
 
 
 @pytest.mark.asyncio
-async def test_handle_inventory_reserved_success(
-    test_db_session: AsyncSession, monkeypatch
-):
+async def test_handle_inventory_reserved_success(mock_db_session, sample_payment):
     """Test handling inventory.reserved event with successful payment."""
     # Mock gateway to succeed
-    async def mock_process(*args, **kwargs):
-        return PaymentResult(
-            success=True,
-            transaction_id="test-txn-success",
-            error_code=None,
-            error_message=None,
-        )
-
-    monkeypatch.setattr(PaymentGateway, "process_payment", mock_process)
-
-    gateway = PaymentGateway()
-    service = PaymentService(test_db_session, gateway)
-
-    order_id = uuid4()
-    user_id = uuid4()
-
-    # Create payment
-    payment = await service.create_payment(
-        order_id=order_id,
-        user_id=user_id,
-        amount=Decimal("99.99"),
-        currency="USD",
-        payment_method="credit_card",
-        metadata={
-            "reservation_id": str(uuid4()),
-            "items": [{"productId": str(uuid4()), "quantity": 2}],
-        },
+    mock_gateway = AsyncMock(spec=PaymentGateway)
+    mock_gateway.process_payment.return_value = PaymentResult(
+        success=True,
+        gateway_transaction_id="test-txn-success",
+        error_code=None,
+        error_message=None,
     )
 
+    service = PaymentService(mock_db_session, mock_gateway)
+
     # Process payment
-    result = await service.process_payment(payment)
+    result = await service.process_payment(sample_payment)
 
     assert result.success is True
-    assert payment.status == PaymentStatus.COMPLETED
-    assert payment.payment_gateway_id == "test-txn-success"
+    assert sample_payment.status == PaymentStatus.COMPLETED
+    assert sample_payment.payment_gateway_id == "test-txn-success"
 
 
 @pytest.mark.asyncio
-async def test_handle_inventory_reserved_failure(
-    test_db_session: AsyncSession, monkeypatch
-):
+async def test_handle_inventory_reserved_failure(mock_db_session, sample_payment):
     """Test handling inventory.reserved event with failed payment."""
     # Mock gateway to fail
-    async def mock_process(*args, **kwargs):
-        return PaymentResult(
-            success=False,
-            transaction_id=None,
-            error_code="CARD_DECLINED",
-            error_message="Card was declined",
-        )
-
-    monkeypatch.setattr(PaymentGateway, "process_payment", mock_process)
-
-    gateway = PaymentGateway()
-    service = PaymentService(test_db_session, gateway)
-
-    order_id = uuid4()
-    user_id = uuid4()
-
-    # Create payment
-    payment = await service.create_payment(
-        order_id=order_id,
-        user_id=user_id,
-        amount=Decimal("99.99"),
-        currency="USD",
-        payment_method="credit_card",
+    mock_gateway = AsyncMock(spec=PaymentGateway)
+    mock_gateway.process_payment.return_value = PaymentResult(
+        success=False,
+        gateway_transaction_id=None,
+        error_code="CARD_DECLINED",
+        error_message="Card was declined",
     )
 
+    service = PaymentService(mock_db_session, mock_gateway)
+
     # Process payment
-    result = await service.process_payment(payment)
+    result = await service.process_payment(sample_payment)
 
     assert result.success is False
-    assert payment.status == PaymentStatus.FAILED
-    assert payment.error_code == "CARD_DECLINED"
+    assert sample_payment.status == PaymentStatus.FAILED
+    assert sample_payment.error_code == "CARD_DECLINED"
 
 
 @pytest.mark.asyncio
 async def test_payment_completed_event_publishing():
     """Test that payment.completed event is properly structured."""
-    from app.events.schemas import PaymentCompletedEvent
-
     event = PaymentCompletedEvent(
         orderId=uuid4(),
         paymentId=uuid4(),
@@ -145,13 +112,12 @@ async def test_payment_completed_event_publishing():
     assert "paymentId" in data
     assert "userId" in data
     assert "paymentGatewayId" in data
+    assert data["eventType"] == "payment.completed"
 
 
 @pytest.mark.asyncio
 async def test_payment_failed_event_publishing():
     """Test that payment.failed event is properly structured."""
-    from app.events.schemas import PaymentFailedEvent
-
     event = PaymentFailedEvent(
         orderId=uuid4(),
         userId=uuid4(),
@@ -170,3 +136,50 @@ async def test_payment_failed_event_publishing():
     assert "orderId" in data
     assert "userId" in data
     assert "errorCode" in data
+    assert data["eventType"] == "payment.failed"
+
+
+@pytest.mark.asyncio
+async def test_reserved_inventory_item_schema():
+    """Test ReservedInventoryItem schema."""
+    item = ReservedInventoryItem(
+        productId=uuid4(),
+        quantity=5,
+    )
+
+    assert item.quantity == 5
+    data = item.model_dump(by_alias=True, mode="json")
+    assert "productId" in data
+    assert data["quantity"] == 5
+
+
+@pytest.mark.asyncio
+async def test_inventory_reserved_event_serialization():
+    """Test that inventory.reserved event serializes correctly."""
+    order_id = uuid4()
+    reservation_id = uuid4()
+    product_id = uuid4()
+    user_id = uuid4()
+
+    event = InventoryReservedEvent(
+        eventType="inventory.reserved",
+        orderId=order_id,
+        reservationId=reservation_id,
+        items=[
+            ReservedInventoryItem(productId=product_id, quantity=3)
+        ],
+        userId=user_id,
+        totalAmount=Decimal("149.99"),
+        timestamp="2026-01-15T12:00:00Z",
+    )
+
+    data = event.model_dump(by_alias=True, mode="json")
+
+    assert data["eventType"] == "inventory.reserved"
+    assert data["orderId"] == str(order_id)
+    assert data["reservationId"] == str(reservation_id)
+    assert data["userId"] == str(user_id)
+    assert data["totalAmount"] == "149.99"
+    assert len(data["items"]) == 1
+    assert data["items"][0]["productId"] == str(product_id)
+    assert data["items"][0]["quantity"] == 3
