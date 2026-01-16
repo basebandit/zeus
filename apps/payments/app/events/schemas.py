@@ -3,12 +3,17 @@ Event schemas for RabbitMQ communication.
 Defines DTOs for consumed and published events.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+def _utc_now() -> datetime:
+    """Get current UTC time."""
+    return datetime.now(timezone.utc)
 
 
 # ============================================================================
@@ -56,7 +61,7 @@ class PaymentCompletedEvent(BaseModel):
     Orders service consumes this to confirm the order.
     """
 
-    model_config = ConfigDict(populate_by_name=True, by_alias=True)
+    model_config = ConfigDict(populate_by_name=True)
 
     event_type: Literal["payment.completed"] = Field(
         default="payment.completed", alias="eventType"
@@ -67,8 +72,8 @@ class PaymentCompletedEvent(BaseModel):
     amount: Decimal
     currency: str
     payment_method: str = Field(alias="paymentMethod")
-    payment_gateway_id: str = Field(alias="paymentGatewayId")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    payment_gateway_id: Optional[str] = Field(default=None, alias="paymentGatewayId")
+    timestamp: datetime = Field(default_factory=_utc_now)
 
 
 class PaymentFailedEvent(BaseModel):
@@ -77,7 +82,7 @@ class PaymentFailedEvent(BaseModel):
     Orders service consumes this to cancel the order.
     """
 
-    model_config = ConfigDict(populate_by_name=True, by_alias=True)
+    model_config = ConfigDict(populate_by_name=True)
 
     event_type: Literal["payment.failed"] = Field(
         default="payment.failed", alias="eventType"
@@ -88,4 +93,4 @@ class PaymentFailedEvent(BaseModel):
     currency: str
     reason: str
     error_code: Optional[str] = Field(default=None, alias="errorCode")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=_utc_now)

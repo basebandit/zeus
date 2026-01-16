@@ -7,7 +7,7 @@ import asyncio
 import random
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 from app.config import settings
@@ -33,7 +33,7 @@ class PaymentGateway:
     - Various error scenarios (insufficient funds, card declined, etc.)
     """
 
-    def __init__(self, success_rate: float = None):
+    def __init__(self, success_rate: Optional[float] = None):
         """
         Initialize payment gateway.
 
@@ -54,7 +54,7 @@ class PaymentGateway:
         payment_method: str,
         order_id: str,
         user_id: str,
-        metadata: Optional[dict] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> PaymentResult:
         """
         Process a payment transaction.
