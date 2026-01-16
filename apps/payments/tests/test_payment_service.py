@@ -24,6 +24,7 @@ async def test_create_payment(mock_db_session, sample_payment_data):
     # Mock refresh to set the id on the payment
     async def mock_refresh(payment):
         payment.id = uuid4()
+
     mock_db_session.refresh = mock_refresh
 
     payment = await service.create_payment(

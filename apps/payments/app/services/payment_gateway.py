@@ -41,7 +41,11 @@ class PaymentGateway:
             success_rate: Probability of successful payment (0.0-1.0).
                          Defaults to PAYMENT_GATEWAY_SUCCESS_RATE from settings.
         """
-        self.success_rate = success_rate if success_rate is not None else settings.payment_gateway_success_rate
+        self.success_rate = (
+            success_rate
+            if success_rate is not None
+            else settings.payment_gateway_success_rate
+        )
 
     async def process_payment(
         self,

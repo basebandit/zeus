@@ -15,7 +15,9 @@ from app.models.payment import Payment  # noqa: F401 - Import to register model
 config = context.config
 
 # Set database URL from app settings (convert async to sync for migrations)
-sync_database_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
+sync_database_url = settings.database_url.replace(
+    "postgresql+asyncpg://", "postgresql://"
+)
 config.set_main_option("sqlalchemy.url", sync_database_url)
 
 # Interpret the config file for Python logging.
@@ -71,9 +73,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

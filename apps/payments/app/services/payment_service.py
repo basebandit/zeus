@@ -111,7 +111,9 @@ class PaymentService:
         Returns:
             Payment record or None
         """
-        result = await self.session.execute(select(Payment).where(Payment.id == payment_id))
+        result = await self.session.execute(
+            select(Payment).where(Payment.id == payment_id)
+        )
         return result.scalar_one_or_none()
 
     async def get_payment_by_order_id(self, order_id: UUID) -> Optional[Payment]:
@@ -124,7 +126,9 @@ class PaymentService:
         Returns:
             Payment record or None
         """
-        result = await self.session.execute(select(Payment).where(Payment.order_id == order_id))
+        result = await self.session.execute(
+            select(Payment).where(Payment.order_id == order_id)
+        )
         return result.scalar_one_or_none()
 
     async def mark_completed(

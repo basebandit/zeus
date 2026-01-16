@@ -165,9 +165,7 @@ async def test_inventory_reserved_event_serialization():
         eventType="inventory.reserved",
         orderId=order_id,
         reservationId=reservation_id,
-        items=[
-            ReservedInventoryItem(productId=product_id, quantity=3)
-        ],
+        items=[ReservedInventoryItem(productId=product_id, quantity=3)],
         userId=user_id,
         totalAmount=Decimal("149.99"),
         timestamp="2026-01-15T12:00:00Z",

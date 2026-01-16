@@ -84,7 +84,9 @@ class EventConsumer:
             logger.info("Binding: inventory.reserved")
 
             # Start consuming
-            await self.queue.consume(lambda msg: self._process_message(msg, message_handler))
+            await self.queue.consume(
+                lambda msg: self._process_message(msg, message_handler)
+            )
 
         except Exception as e:
             logger.error(f"Failed to start event consumer: {e}")
@@ -122,12 +124,16 @@ class EventConsumer:
 
                 # Check retry count
                 max_retries = 3
-                retry_count = message.headers.get("x-retry-count", 0) if message.headers else 0
+                retry_count = (
+                    message.headers.get("x-retry-count", 0) if message.headers else 0
+                )
 
                 if retry_count < max_retries:
                     # Retry with delay
                     retry_count += 1
-                    logger.warning(f"Retrying message (attempt {retry_count}/{max_retries})")
+                    logger.warning(
+                        f"Retrying message (attempt {retry_count}/{max_retries})"
+                    )
 
                     # Publish message back to queue with incremented retry count
                     await self._retry_message(message, retry_count)

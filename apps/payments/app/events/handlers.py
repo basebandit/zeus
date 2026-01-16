@@ -50,7 +50,7 @@ async def handle_inventory_reserved(event_data: dict):
                     payment_method=event.payment_method,
                     metadata={
                         "reservation_id": str(event.reservation_id),
-                        "items": [item.model_dump(mode='json') for item in event.items],
+                        "items": [item.model_dump(mode="json") for item in event.items],
                     },
                 )
 
@@ -81,7 +81,9 @@ async def handle_inventory_reserved(event_data: dict):
                     )
 
                     await rabbitmq_service.publish_payment_completed(completed_event)
-                    logger.info(f"Published payment.completed event for order {event.order_id}")
+                    logger.info(
+                        f"Published payment.completed event for order {event.order_id}"
+                    )
 
                 else:
                     logger.warning(
@@ -101,11 +103,15 @@ async def handle_inventory_reserved(event_data: dict):
                     )
 
                     await rabbitmq_service.publish_payment_failed(failed_event)
-                    logger.info(f"Published payment.failed event for order {event.order_id}")
+                    logger.info(
+                        f"Published payment.failed event for order {event.order_id}"
+                    )
 
             except Exception as e:
                 await session.rollback()
-                logger.error(f"Error processing payment for order {event.order_id}: {e}")
+                logger.error(
+                    f"Error processing payment for order {event.order_id}: {e}"
+                )
                 raise
 
     except Exception as e:

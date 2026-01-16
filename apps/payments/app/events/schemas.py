@@ -58,7 +58,9 @@ class PaymentCompletedEvent(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)
 
-    event_type: Literal["payment.completed"] = Field(default="payment.completed", alias="eventType")
+    event_type: Literal["payment.completed"] = Field(
+        default="payment.completed", alias="eventType"
+    )
     order_id: UUID = Field(alias="orderId")
     payment_id: UUID = Field(alias="paymentId")
     user_id: UUID = Field(alias="userId")
@@ -77,7 +79,9 @@ class PaymentFailedEvent(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)
 
-    event_type: Literal["payment.failed"] = Field(default="payment.failed", alias="eventType")
+    event_type: Literal["payment.failed"] = Field(
+        default="payment.failed", alias="eventType"
+    )
     order_id: UUID = Field(alias="orderId")
     user_id: UUID = Field(alias="userId")
     amount: Decimal
