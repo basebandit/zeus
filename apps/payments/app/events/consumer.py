@@ -9,8 +9,13 @@ import logging
 from typing import Any, Awaitable, Callable, Optional
 
 import aio_pika
-from aio_pika import ExchangeType, IncomingMessage
-from aio_pika.abc import AbstractChannel, AbstractQueue, AbstractRobustConnection
+from aio_pika import ExchangeType
+from aio_pika.abc import (
+    AbstractChannel,
+    AbstractIncomingMessage,
+    AbstractQueue,
+    AbstractRobustConnection,
+)
 
 from app.config import settings
 
@@ -96,7 +101,7 @@ class EventConsumer:
 
     async def _process_message(
         self,
-        message: IncomingMessage,
+        message: AbstractIncomingMessage,
         handler: Callable[[dict[str, Any]], Awaitable[None]],
     ) -> None:
         """
@@ -111,7 +116,7 @@ class EventConsumer:
                 # Get retry count from headers
                 retry_count = 0
                 if message.headers and "x-retry-count" in message.headers:
-                    retry_count = message.headers["x-retry-count"]
+                    retry_count = int(message.headers["x-retry-count"])  # type: ignore[arg-type]
 
                 logger.info(f"Processing message (retry: {retry_count})")
                 logger.debug(f"Message body: {message.body.decode()}")
@@ -130,9 +135,10 @@ class EventConsumer:
 
                 # Check retry count
                 max_retries = 3
-                retry_count = (
+                header_value = (
                     message.headers.get("x-retry-count", 0) if message.headers else 0
                 )
+                retry_count = int(header_value)  # type: ignore[arg-type]
 
                 if retry_count < max_retries:
                     # Retry with delay
@@ -151,7 +157,9 @@ class EventConsumer:
                 # Reject message (will go to DLQ if max retries exceeded)
                 raise
 
-    async def _retry_message(self, message: IncomingMessage, retry_count: int) -> None:
+    async def _retry_message(
+        self, message: AbstractIncomingMessage, retry_count: int
+    ) -> None:
         """
         Retry a failed message by republishing with updated retry count.
 
