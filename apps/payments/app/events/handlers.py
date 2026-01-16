@@ -3,7 +3,9 @@ Event handlers for processing consumed events.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Any
 
 from app.db.session import AsyncSessionLocal
 from app.events.rabbitmq import rabbitmq_service
@@ -18,7 +20,7 @@ from app.services.payment_service import PaymentService
 logger = logging.getLogger(__name__)
 
 
-async def handle_inventory_reserved(event_data: dict):
+async def handle_inventory_reserved(event_data: dict[str, Any]) -> None:
     """
     Handle inventory.reserved event.
 
@@ -70,14 +72,16 @@ async def handle_inventory_reserved(event_data: dict):
 
                     # Publish payment.completed event
                     completed_event = PaymentCompletedEvent(
-                        order_id=payment.order_id,
-                        payment_id=payment.id,
-                        user_id=payment.user_id,
-                        amount=payment.amount,
-                        currency=payment.currency,
-                        payment_method=payment.payment_method,
-                        payment_gateway_id=payment.payment_gateway_id,
-                        timestamp=datetime.utcnow(),
+                        orderId=payment.order_id,
+                        paymentId=payment.id,
+                        userId=payment.user_id,
+                        amount=Decimal(str(payment.amount)),
+                        currency=str(payment.currency),
+                        paymentMethod=str(payment.payment_method),
+                        paymentGatewayId=str(payment.payment_gateway_id)
+                        if payment.payment_gateway_id
+                        else None,
+                        timestamp=datetime.now(timezone.utc),
                     )
 
                     await rabbitmq_service.publish_payment_completed(completed_event)
@@ -93,13 +97,13 @@ async def handle_inventory_reserved(event_data: dict):
 
                     # Publish payment.failed event
                     failed_event = PaymentFailedEvent(
-                        order_id=payment.order_id,
-                        user_id=payment.user_id,
-                        amount=payment.amount,
-                        currency=payment.currency,
+                        orderId=payment.order_id,
+                        userId=payment.user_id,
+                        amount=Decimal(str(payment.amount)),
+                        currency=str(payment.currency),
                         reason=result.error_message or "Payment processing failed",
-                        error_code=result.error_code,
-                        timestamp=datetime.utcnow(),
+                        errorCode=result.error_code,
+                        timestamp=datetime.now(timezone.utc),
                     )
 
                     await rabbitmq_service.publish_payment_failed(failed_event)

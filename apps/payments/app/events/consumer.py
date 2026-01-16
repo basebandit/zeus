@@ -6,11 +6,11 @@ Consumes events from other services and delegates to handlers.
 import asyncio
 import json
 import logging
-from typing import Callable
+from typing import Any, Awaitable, Callable, Optional
 
 import aio_pika
 from aio_pika import ExchangeType, IncomingMessage
-from aio_pika.abc import AbstractQueue
+from aio_pika.abc import AbstractChannel, AbstractQueue, AbstractRobustConnection
 
 from app.config import settings
 
@@ -33,11 +33,13 @@ class EventConsumer:
         """
         self.rabbitmq_url = rabbitmq_url
         self.exchange_name = exchange_name
-        self.connection = None
-        self.channel = None
-        self.queue: AbstractQueue = None
+        self.connection: Optional[AbstractRobustConnection] = None
+        self.channel: Optional[AbstractChannel] = None
+        self.queue: Optional[AbstractQueue] = None
 
-    async def start(self, message_handler: Callable):
+    async def start(
+        self, message_handler: Callable[[dict[str, Any]], Awaitable[None]]
+    ) -> None:
         """
         Start consuming events.
 
@@ -92,7 +94,11 @@ class EventConsumer:
             logger.error(f"Failed to start event consumer: {e}")
             raise
 
-    async def _process_message(self, message: IncomingMessage, handler: Callable):
+    async def _process_message(
+        self,
+        message: IncomingMessage,
+        handler: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
         """
         Process a single message with retry logic.
 
@@ -145,7 +151,7 @@ class EventConsumer:
                 # Reject message (will go to DLQ if max retries exceeded)
                 raise
 
-    async def _retry_message(self, message: IncomingMessage, retry_count: int):
+    async def _retry_message(self, message: IncomingMessage, retry_count: int) -> None:
         """
         Retry a failed message by republishing with updated retry count.
 
@@ -154,6 +160,8 @@ class EventConsumer:
             retry_count: New retry count
         """
         try:
+            if self.channel is None:
+                raise RuntimeError("Channel not initialized")
             exchange = await self.channel.declare_exchange(
                 name=self.exchange_name,
                 type=ExchangeType.TOPIC,
@@ -184,14 +192,14 @@ class EventConsumer:
             logger.error(f"Failed to retry message: {e}")
             raise
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop consuming and close connection."""
         if self.connection:
             await self.connection.close()
             logger.info("Event consumer stopped")
 
 
-async def start_consumer(handler: Callable):
+async def start_consumer(handler: Callable[[dict[str, Any]], Awaitable[None]]) -> None:
     """
     Start the event consumer.
 
