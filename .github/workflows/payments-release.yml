@@ -3,7 +3,7 @@ name: Release - Payments
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "payments/v*.*.*"
 
 permissions:
   contents: write
@@ -45,7 +45,7 @@ jobs:
 
       - name: 🐳 Build & Push Docker image
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${GITHUB_REF#refs/tags/payments/}
           IMAGE=${{ steps.ecr.outputs.registry }}/payments
           docker build -t $IMAGE:$VERSION .
           docker push $IMAGE:$VERSION
