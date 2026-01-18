@@ -1,6 +1,6 @@
 [project]
 name = "payments"
-version = "2.1.0"
+version = "3.0.0"
 description = "Payment service for Zeus e-commerce platform with event-driven architecture"
 readme = "README.md"
 requires-python = ">=3.12"
