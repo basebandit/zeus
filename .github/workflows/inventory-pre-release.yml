@@ -1,0 +1,83 @@
+name: Prepare Release - Inventory
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+      bump_type:
+        description: 'Version bump type for changelog'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/inventory
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install git-chglog
+        run: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+      - name: Generate CHANGELOG
+        run: |
+          git-chglog --output CHANGELOG.md --next-tag inventory/v${{ github.event.inputs.version }}
+
+      - name: Commit changes
+        run: |
+          git add CHANGELOG.md
+          git commit -m "chore(inventory): prepare release v${{ github.event.inputs.version }}"
+
+      - name: Create release branch and push
+        run: |
+          git checkout -b inventory-release/v${{ github.event.inputs.version }}
+          git push origin inventory-release/v${{ github.event.inputs.version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: inventory-release/v${{ github.event.inputs.version }}
+          base: main
+          title: 'chore(inventory): release v${{ github.event.inputs.version }}'
+          body: |
+            ## Release v${{ github.event.inputs.version }}
+
+            This PR prepares the release of Inventory Service v${{ github.event.inputs.version }}.
+
+            ### Checklist
+            - [ ] CHANGELOG.md has been reviewed
+            - [ ] All tests pass
+            - [ ] Ready to merge and tag
+
+            After merging, create the release tag:
+            ```bash
+            git tag inventory/v${{ github.event.inputs.version }}
+            git push origin inventory/v${{ github.event.inputs.version }}
+            ```
