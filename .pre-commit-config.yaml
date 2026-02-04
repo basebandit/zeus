@@ -1,6 +1,5 @@
-exclude: '.git|.tox|__pycache__'
+exclude: '.git|.tox|__pycache__|node_modules'
 repos:
-  # Shared hooks that could run on all apps (if you add more later)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -12,8 +11,12 @@ repos:
         files: ^apps/
       - id: check-toml
         files: ^apps/
+      - id: check-json
+        files: ^apps/
+      - id: check-merge-conflict
+        files: ^apps/
 
-  # App-specific hooks for payments
+  # PAYMENTS (Python)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.4
     hooks:
@@ -43,5 +46,66 @@ repos:
         entry: bash -c 'cd apps/payments && uv run cz check --commit-msg-file "$1"' _
         language: system
         stages: [commit-msg]
-        pass_filenames: true 
+        pass_filenames: true
         always_run: true
+
+  # INVENTORY (Go)
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.61.0
+    hooks:
+      - id: golangci-lint
+        name: 'golangci-lint (inventory)'
+        entry: bash -c 'cd apps/inventory && golangci-lint run --fix'
+        language: system
+        files: ^apps/inventory/.*\.go$
+        require_serial: true
+
+  - repo: local
+    hooks:
+      - id: go-fmt-inventory
+        name: 'go fmt (inventory)'
+        entry: bash -c 'cd apps/inventory && gofmt -l -w .'
+        language: system
+        files: ^apps/inventory/.*\.go$
+        pass_filenames: false
+
+      - id: go-mod-tidy-inventory
+        name: 'go mod tidy (inventory)'
+        entry: bash -c 'cd apps/inventory && go mod tidy && git diff --exit-code go.mod go.sum'
+        language: system
+        files: ^apps/inventory/(.*\.go|go\.mod|go\.sum)$
+        pass_filenames: false
+        require_serial: true
+
+      - id: go-vet-inventory
+        name: 'go vet (inventory)'
+        entry: bash -c 'cd apps/inventory && go vet ./...'
+        language: system
+        files: ^apps/inventory/.*\.go$
+        pass_filenames: false
+
+  # ORDERS (TypeScript)
+  - repo: local
+    hooks:
+      - id: eslint-orders
+        name: 'eslint (orders)'
+        entry: bash -c 'cd apps/orders && npx eslint --fix "{src,test}/**/*.ts"'
+        language: system
+        files: ^apps/orders/.*\.(ts|js)$
+        pass_filenames: false
+        require_serial: true
+
+      - id: prettier-orders
+        name: 'prettier (orders)'
+        entry: bash -c 'cd apps/orders && npx prettier --write "src/**/*.ts" "test/**/*.ts"'
+        language: system
+        files: ^apps/orders/.*\.(ts|js|json)$
+        pass_filenames: false
+
+      - id: tsc-orders
+        name: 'typescript check (orders)'
+        entry: bash -c 'cd apps/orders && npx tsc --noEmit'
+        language: system
+        files: ^apps/orders/.*\.ts$
+        pass_filenames: false
+        require_serial: true
