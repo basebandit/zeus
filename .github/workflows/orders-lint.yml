@@ -9,6 +9,10 @@ on:
   pull_request:
     paths:
       - 'apps/orders/**'
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   lint-and-test:
@@ -39,6 +43,9 @@ jobs:
       - name: Format check
         run: npm run format
 
+      - name: Type check
+        run: npx tsc --noEmit
+
       - name: Run tests
         run: npm run test
 
@@ -50,3 +57,4 @@ jobs:
         with:
           files: ./apps/orders/coverage/lcov.info
           flags: orders-service
+          fail_ci_if_error: false

@@ -3,7 +3,7 @@ name: Orders Service - Release
 on:
   push:
     tags:
-      - 'orders-v*.*.*'
+      - 'orders/v*.*.*'
 
 permissions:
   contents: write
@@ -38,7 +38,7 @@ jobs:
 
       - name: Extract version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/orders-v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF#refs/tags/orders/}" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -62,7 +62,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Orders Service ${{ steps.get_version.outputs.VERSION }}
           body_path: apps/orders/CHANGELOG.md
