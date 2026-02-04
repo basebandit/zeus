@@ -12,7 +12,7 @@ resource "helm_release" "argocd" {
 
   version = "8.2.2" # chart version - https://github.com/argoproj/argo-helm/blob/argo-cd-8.2.2/charts/argo-cd/Chart.yaml
 
-  depends_on = [aws_eks_node_group.general]
+  depends_on = [module.eks]
 }
 
 resource "helm_release" "argocd_apps" {
@@ -29,6 +29,6 @@ resource "helm_release" "argocd_apps" {
 
   version = "2.0.2" # chart version - https://github.com/argoproj/argo-helm/blob/argocd-apps-2.0.2/charts/argocd-apps/Chart.yaml
 
-  depends_on = [aws_eks_node_group.general]
+  depends_on = [module.eks]
 }
 

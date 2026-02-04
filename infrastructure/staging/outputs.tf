@@ -1,69 +1,59 @@
 output "vpc_id" {
-  value       = aws_vpc.main.id
+  value       = module.vpc.vpc_id
   description = "VPC id"
 }
 
 output "vpc_arn" {
-  value       = aws_vpc.main.arn
+  value       = module.vpc.vpc_arn
   description = "VPC arn"
 }
 
 output "vpc_name" {
-  value       = aws_vpc.main.tags["Name"]
+  value       = module.vpc.name
   description = "Name tag of the VPC"
 }
 
 output "vpc_cidr_block" {
-  value       = aws_vpc.main.cidr_block
+  value       = module.vpc.vpc_cidr_block
   description = "VPC main cidr block"
 }
 
 output "availability_zones" {
-  value       = local.azs
+  value       = module.vpc.azs
   description = "AZs used for subnets"
 }
 
 output "vpc_private_subnet_cidr_blocks" {
-  value       = [aws_subnet.private_zone1.cidr_block, aws_subnet.private_zone2.cidr_block]
+  value       = module.vpc.private_subnets_cidr_blocks
   description = "List of private subnet cidr blocks"
 }
 
 output "vpc_public_subnet_cidr_blocks" {
-  value       = [aws_subnet.public_zone1.cidr_block, aws_subnet.public_zone2.cidr_block]
+  value       = module.vpc.public_subnets_cidr_blocks
   description = "List of public subnet cidr blocks"
 }
 
 output "vpc_nat_gateway_static_public_ip" {
-  value = aws_eip.nat.public_ip
+  value = module.vpc.nat_public_ips[0]
 }
 
 output "private_subnet_ids" {
-  value       = [aws_subnet.private_zone1.id, aws_subnet.private_zone2.id]
+  value       = module.vpc.private_subnets
   description = "List of private subnet IDs"
 }
 
 output "public_subnet_ids" {
-  value       = [aws_subnet.public_zone1.id, aws_subnet.public_zone2.id]
+  value       = module.vpc.public_subnets
   description = "List of public subnet IDs"
 }
 
-output "private_route_table_id" {
-  value       = aws_route_table.private.id
-  description = "Route table for private subnets"
-}
-
-output "public_route_table_id" {
-  value       = aws_route_table.public.id
-  description = "Route table for public subnets"
-}
-
 output "internet_gateway_id" {
-  value       = aws_internet_gateway.igw.id
+  value       = module.vpc.igw_id
   description = "ID of the Internet Gateway"
 }
 
 output "nat_gateway_id" {
-  value       = aws_nat_gateway.nat.id
+  value       = module.vpc.natgw_ids[0]
   description = "ID of the NAT Gateway"
 }
 
@@ -71,46 +61,41 @@ output "nat_gateway_id" {
 # EKS
 # ===================================================
 output "eks_cluster_name" {
-  value       = aws_eks_cluster.eks.name
+  value       = module.eks.cluster_name
   description = "Name of the EKS cluster"
 }
 
 output "eks_cluster_endpoint" {
-  value       = aws_eks_cluster.eks.endpoint
+  value       = module.eks.cluster_endpoint
   description = "API server endpoint of the EKS cluster"
 }
 
 output "eks_cluster_role_arn" {
-  value       = aws_iam_role.eks.arn
+  value       = module.eks.cluster_iam_role_arn
   description = "IAM role ARN used by the EKS control plane"
 }
 
 output "eks_cluster_security_group_id" {
-  value       = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
+  value       = module.eks.cluster_security_group_id
   description = "Security group ID associated with the EKS cluster"
 }
 
-output "eks_node_group_name" {
-  value       = aws_eks_node_group.general.node_group_name
-  description = "Name of the EKS node group"
-}
-
-output "eks_node_role_arn" {
-  value       = aws_iam_role.nodes.arn
-  description = "IAM role ARN assigned to the node group"
-}
-
-output "eks_node_group_autoscaling_group" {
-  value       = aws_eks_node_group.general.resources[0].autoscaling_groups[0].name
-  description = "Security group IDs used by the EKS nodes"
+output "eks_node_group_autoscaling_group_names" {
+  value       = module.eks.eks_managed_node_groups_autoscaling_group_names
+  description = "List of autoscaling group names for EKS node groups"
 }
 
 output "eks_cluster_version" {
-  value       = aws_eks_cluster.eks.version
+  value       = module.eks.cluster_version
   description = "Kubernetes version of the EKS cluster"
 }
 
 output "eks_oidc_issuer_url" {
-  value       = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+  value       = module.eks.cluster_oidc_issuer_url
   description = "OIDC issuer URL used for IAM Roles for Service Accounts (IRSA)"
+}
+
+output "eks_oidc_provider_arn" {
+  value       = module.eks.oidc_provider_arn
+  description = "ARN of the OIDC Provider for IRSA"
 }
