@@ -1,8 +1,9 @@
 module "eks" {
   source = "../modules/eks"
 
-  name        = "${local.env}-${local.cluster_name}"
-  environment = local.env
+  name               = "${local.env}-${local.cluster_name}"
+  environment        = local.env
+  kubernetes_version = local.cluster_version
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets

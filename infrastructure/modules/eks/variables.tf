@@ -60,6 +60,12 @@ variable "environment" {
   type        = string
 }
 
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.32"
+}
+
 variable "tags" {
   description = "Additional tags for all resources"
   type        = map(string)
