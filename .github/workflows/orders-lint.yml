@@ -37,14 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Format check
-        run: npm run format
-
-      - name: Type check
-        run: npx tsc --noEmit
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --files apps/orders/**/*.ts apps/orders/**/*.js apps/orders/**/*.json
 
       - name: Run tests
         run: npm run test
