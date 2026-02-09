@@ -81,10 +81,10 @@ type InventoryConfirmedEvent struct {
 
 // LowStockAlertEvent is published when inventory falls below threshold
 type LowStockAlertEvent struct {
-	EventType   string    `json:"eventType"`
-	ProductName string    `json:"productName"`
-	ProductID   uuid.UUID `json:"productId"`
-	Timestamp   time.Time `json:"timestamp"`
-	Threshold   int       `json:"threshold"`
-	AvailableQuantity int `json:"availableQuantity"`
+	EventType         string    `json:"eventType"`
+	ProductName       string    `json:"productName"`
+	ProductID         uuid.UUID `json:"productId"`
+	Timestamp         time.Time `json:"timestamp"`
+	Threshold         int       `json:"threshold"`
+	AvailableQuantity int       `json:"availableQuantity"`
 }
