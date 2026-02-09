@@ -50,18 +50,16 @@ repos:
         always_run: true
 
   # INVENTORY (Go)
-  - repo: https://github.com/golangci/golangci-lint
-    rev: v1.64.2
-    hooks:
-      - id: golangci-lint
-        name: 'golangci-lint (inventory)'
-        entry: bash -c 'cd apps/inventory && golangci-lint run --fix'
-        language: system
-        files: ^apps/inventory/.*\.go$
-        require_serial: true
-
   - repo: local
     hooks:
+      - id: golangci-lint-inventory
+        name: 'golangci-lint (inventory)'
+        entry: bash -c 'cd apps/inventory && (command -v golangci-lint >/dev/null 2>&1 || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.2) && golangci-lint run --fix'
+        language: system
+        files: ^apps/inventory/.*\.go$
+        pass_filenames: false
+        require_serial: true
+
       - id: go-fmt-inventory
         name: 'go fmt (inventory)'
         entry: bash -c 'cd apps/inventory && gofmt -l -w .'
@@ -89,7 +87,7 @@ repos:
     hooks:
       - id: eslint-orders
         name: 'eslint (orders)'
-        entry: bash -c 'cd apps/orders && npx eslint --fix "{src,test}/**/*.ts"'
+        entry: bash -c 'cd apps/orders && npm exec -- eslint --fix "{src,test}/**/*.ts"'
         language: system
         files: ^apps/orders/.*\.(ts|js)$
         pass_filenames: false
@@ -97,14 +95,14 @@ repos:
 
       - id: prettier-orders
         name: 'prettier (orders)'
-        entry: bash -c 'cd apps/orders && npx prettier --write "src/**/*.ts" "test/**/*.ts"'
+        entry: bash -c 'cd apps/orders && npm exec -- prettier --write "src/**/*.ts" "test/**/*.ts"'
         language: system
         files: ^apps/orders/.*\.(ts|js|json)$
         pass_filenames: false
 
       - id: tsc-orders
         name: 'typescript check (orders)'
-        entry: bash -c 'cd apps/orders && npx tsc --noEmit'
+        entry: bash -c 'cd apps/orders && npm exec -- tsc --noEmit'
         language: system
         files: ^apps/orders/.*\.ts$
         pass_filenames: false
