@@ -7,11 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/basebandit/zeus/inventory/internal/config"
-	"github.com/basebandit/zeus/inventory/internal/events"
-	"github.com/basebandit/zeus/inventory/internal/handler"
-	"github.com/basebandit/zeus/inventory/internal/repository"
-	"github.com/basebandit/zeus/inventory/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migratepostgres "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -21,6 +16,12 @@ import (
 	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/basebandit/zeus/inventory/internal/config"
+	"github.com/basebandit/zeus/inventory/internal/events"
+	"github.com/basebandit/zeus/inventory/internal/handler"
+	"github.com/basebandit/zeus/inventory/internal/repository"
+	"github.com/basebandit/zeus/inventory/internal/service"
 
 	_ "github.com/basebandit/zeus/inventory/docs" // Swagger docs
 )
@@ -102,7 +103,7 @@ func main() {
 	log.Printf("Inventory service starting on %s", addr)
 	log.Printf("API Documentation available at: http://localhost:%s/api/docs/index.html", cfg.Server.Port)
 	if err := router.Run(addr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Printf("Failed to start server: %v", err)
 	}
 }
 
