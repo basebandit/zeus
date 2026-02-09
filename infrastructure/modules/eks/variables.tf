@@ -65,3 +65,39 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster (e.g., 1.29). If null, the provider or module default is used."
+  type        = string
+  default     = null
+}
+
+variable "cluster_endpoint_public_access" {
+  description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "cluster_endpoint_private_access" {
+  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled."
+  type        = bool
+  default     = false
+}
+
+variable "aws_auth_roles" {
+  description = "List of role mappings to add to the aws-auth ConfigMap."
+  type        = list(any)
+  default     = []
+}
+
+variable "aws_auth_users" {
+  description = "List of user mappings to add to the aws-auth ConfigMap."
+  type        = list(any)
+  default     = []
+}
+
+variable "aws_auth_accounts" {
+  description = "List of AWS account IDs to add to the aws-auth ConfigMap."
+  type        = list(string)
+  default     = []
+}
