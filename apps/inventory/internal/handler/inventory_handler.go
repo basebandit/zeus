@@ -32,8 +32,8 @@ type ReserveStockRequest struct {
 
 // ReleaseReservationRequest represents the request to release a reservation
 type ReleaseReservationRequest struct {
-	ReservationID uuid.UUID `json:"reservationId" binding:"required"`
 	Reason        string    `json:"reason"`
+	ReservationID uuid.UUID `json:"reservationId" binding:"required"`
 }
 
 // AddStockRequest represents the request to add stock
