@@ -51,7 +51,8 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	if err := runMigrations(db); err != nil {
+	err = runMigrations(db)
+	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 

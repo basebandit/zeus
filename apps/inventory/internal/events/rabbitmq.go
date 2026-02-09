@@ -143,10 +143,12 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 	}
 
 	// Bind queue to exchange with routing keys
-	if err := r.channel.QueueBind(queue.Name, "order.created", r.exchange, false, nil); err != nil {
+	err = r.channel.QueueBind(queue.Name, "order.created", r.exchange, false, nil)
+	if err != nil {
 		return fmt.Errorf("failed to bind order.created: %w", err)
 	}
-	if err := r.channel.QueueBind(queue.Name, "order.cancelled", r.exchange, false, nil); err != nil {
+	err = r.channel.QueueBind(queue.Name, "order.cancelled", r.exchange, false, nil)
+	if err != nil {
 		return fmt.Errorf("failed to bind order.cancelled: %w", err)
 	}
 
