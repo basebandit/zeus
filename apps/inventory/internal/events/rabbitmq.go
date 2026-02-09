@@ -172,13 +172,19 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 				// Retry logic
 				retryCount := getRetryCount(msg.Headers)
 				if retryCount < 3 {
-					msg.Nack(false, true) // Requeue
+					if nackErr := msg.Nack(false, true); nackErr != nil {
+						log.Printf("Failed to nack message: %v", nackErr)
+					}
 				} else {
 					log.Printf("Max retries exceeded, sending to DLQ")
-					msg.Nack(false, false) // Don't requeue, goes to DLQ
+					if nackErr := msg.Nack(false, false); nackErr != nil {
+						log.Printf("Failed to nack message to DLQ: %v", nackErr)
+					}
 				}
 			} else {
-				msg.Ack(false)
+				if ackErr := msg.Ack(false); ackErr != nil {
+					log.Printf("Failed to ack message: %v", ackErr)
+				}
 			}
 		}
 	}()

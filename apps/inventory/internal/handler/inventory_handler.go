@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -131,7 +132,9 @@ func (h *InventoryHandler) ConfirmReservation(c *gin.Context) {
 		// OrderID and items would need to be fetched from reservation
 		Timestamp: time.Now(),
 	}
-	h.rabbitMQ.PublishInventoryConfirmed(confirmedEvent)
+	if err := h.rabbitMQ.PublishInventoryConfirmed(confirmedEvent); err != nil {
+		log.Printf("Failed to publish inventory confirmed event: %v", err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Reservation confirmed successfully"})
 }
