@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.32"
+}
+
 variable "vpc_id" {
   description = "ID of the VPC where the cluster will be deployed"
   type        = string
@@ -11,6 +17,18 @@ variable "vpc_id" {
 variable "subnet_ids" {
   description = "List of subnet IDs for the EKS cluster"
   type        = list(string)
+}
+
+variable "endpoint_public_access" {
+  description = "Enable public API server endpoint access"
+  type        = bool
+  default     = false
+}
+
+variable "endpoint_private_access" {
+  description = "Enable private API server endpoint access"
+  type        = bool
+  default     = true
 }
 
 variable "cloudwatch_log_group_retention_in_days" {

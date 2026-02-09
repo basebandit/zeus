@@ -8,9 +8,9 @@ Reusable Terraform module for creating an Amazon EKS cluster using [terraform-aw
 module "eks" {
   source = "../modules/eks"
 
-  name               = "staging-cluster"
-  kubernetes_version = "1.32"
-  environment        = "staging"
+  name            = "staging-cluster"
+  cluster_version = "1.32"
+  environment     = "staging"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
@@ -48,11 +48,11 @@ module "eks" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | name | Name of the EKS cluster | `string` | n/a | yes |
-| kubernetes_version | Kubernetes version for the EKS cluster | `string` | `"1.32"` | no |
+| cluster_version | Kubernetes version for the EKS cluster | `string` | `"1.32"` | no |
 | vpc_id | ID of the VPC where the cluster will be deployed | `string` | n/a | yes |
 | subnet_ids | List of subnet IDs for the EKS cluster | `list(string)` | n/a | yes |
-| endpoint_public_access | Enable public API server endpoint access | `bool` | `true` | no |
-| endpoint_private_access | Enable private API server endpoint access | `bool` | `false` | no |
+| endpoint_public_access | Enable public API server endpoint access | `bool` | `false` | no |
+| endpoint_private_access | Enable private API server endpoint access | `bool` | `true` | no |
 | enable_cluster_creator_admin_permissions | Adds the current caller identity as an administrator | `bool` | `true` | no |
 | authentication_mode | Authentication mode (API, API_AND_CONFIG_MAP, CONFIG_MAP) | `string` | `"API"` | no |
 | eks_managed_node_groups | Map of EKS managed node group definitions | `any` | `{}` | no |

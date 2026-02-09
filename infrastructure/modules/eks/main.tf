@@ -9,9 +9,9 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  # Private access only - use AWS CLI with valid credentials
-  endpoint_public_access  = false
-  endpoint_private_access = true
+  # Endpoint access configuration
+  endpoint_public_access  = var.endpoint_public_access
+  endpoint_private_access = var.endpoint_private_access
 
   # Cluster access configuration
   enable_cluster_creator_admin_permissions = true
