@@ -1,21 +1,20 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.14.0"
-
   name    = var.name
-  kubernetes_version = "1.32"
+  kubernetes_version = var.cluster_version
 
   # VPC Configuration
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  # Private access only - use AWS CLI with valid credentials
-  endpoint_public_access  = false
-  endpoint_private_access = true
+  # Endpoint access configuration
+  endpoint_public_access  = var.endpoint_public_access
+  endpoint_private_access = var.endpoint_private_access
 
   # Cluster access configuration
-  enable_cluster_creator_admin_permissions = true
-  authentication_mode                      = "API"
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
+  authentication_mode                      = var.authentication_mode
 
   # Security: Enable secrets encryption with KMS
   create_kms_key                  = true
