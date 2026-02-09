@@ -6,14 +6,6 @@ on:
       version:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
-      bump_type:
-        description: 'Version bump type for changelog'
-        required: true
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
 
 permissions:
   contents: write

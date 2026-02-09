@@ -1,7 +1,6 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.14.0"
-
   name    = var.name
   kubernetes_version = var.cluster_version
 
@@ -14,8 +13,8 @@ module "eks" {
   endpoint_private_access = var.endpoint_private_access
 
   # Cluster access configuration
-  enable_cluster_creator_admin_permissions = true
-  authentication_mode                      = "API"
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
+  authentication_mode                      = var.authentication_mode
 
   # Security: Enable secrets encryption with KMS
   create_kms_key                  = true
