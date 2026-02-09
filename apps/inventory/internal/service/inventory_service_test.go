@@ -10,14 +10,8 @@ import (
 
 func TestCreateProduct(t *testing.T) {
 	product := &models.Product{
-		ID:          uuid.New(),
-		Name:        "Test Product",
-		Description: "Test Description",
-		SKU:         "TEST-001",
-		Price:       99.99,
-		Currency:    "USD",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:   uuid.New(),
+		Name: "Test Product",
 	}
 
 	inventory := &models.Inventory{
@@ -145,8 +139,6 @@ func TestReleaseInventory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inventory := &models.Inventory{
-				ID:                uuid.New(),
-				ProductID:         uuid.New(),
 				AvailableQuantity: tt.availableQty,
 				ReservedQuantity:  tt.reservedQty,
 			}
@@ -194,10 +186,7 @@ func TestConfirmReservation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inventory := &models.Inventory{
-				ID:                uuid.New(),
-				ProductID:         uuid.New(),
-				AvailableQuantity: tt.availableQty,
-				ReservedQuantity:  tt.reservedQty,
+				ReservedQuantity: tt.reservedQty,
 			}
 
 			// Simulate confirmation logic (deduct from reserved, not from available)

@@ -26,7 +26,7 @@ func (h *EventHandler) HandleOrderCreated(event *OrderCreatedEvent) error {
 	log.Printf("Processing order.created event for order %s", event.OrderID)
 
 	// Track reservations and failures
-	var reservedItems []ReservedInventoryItem
+	reservedItems := make([]ReservedInventoryItem, 0, len(event.Items))
 	var failedItems []FailedInventoryItem
 	var reservationID uuid.UUID
 
