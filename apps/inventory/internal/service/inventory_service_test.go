@@ -85,8 +85,6 @@ func TestReserveInventory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inventory := &models.Inventory{
-				ID:                uuid.New(),
-				ProductID:         uuid.New(),
 				AvailableQuantity: tt.availableQty,
 				ReservedQuantity:  tt.reservedQty,
 			}

@@ -63,13 +63,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize RabbitMQ: %v", err)
 	}
-	defer rabbitMQ.Close()
 
 	eventHandler := events.NewEventHandler(inventoryService, rabbitMQ)
 	if err := eventHandler.StartConsumers(); err != nil {
 		rabbitMQ.Close()
 		log.Fatalf("Failed to start event consumers: %v", err)
 	}
+	defer rabbitMQ.Close()
 
 	scheduler := service.NewReservationScheduler(inventoryService)
 	scheduler.Start()
