@@ -3,7 +3,7 @@ module "eks" {
   version = "21.14.0"
 
   name    = var.name
-  kubernetes_version = "1.32"
+  kubernetes_version = var.cluster_version
 
   # VPC Configuration
   vpc_id     = var.vpc_id
