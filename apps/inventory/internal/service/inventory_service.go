@@ -35,7 +35,7 @@ func NewInventoryService(repo *repository.InventoryRepository) *InventoryService
 }
 
 // ReserveStock reserves inventory for an order with optimistic locking
-func (s *InventoryService) ReserveStock(productID uuid.UUID, orderID uuid.UUID, quantity int) (*models.Reservation, error) {
+func (s *InventoryService) ReserveStock(productID, orderID uuid.UUID, quantity int) (*models.Reservation, error) {
 	for retries := 0; retries < MaxRetries; retries++ {
 		// Get current inventory
 		inv, err := s.repo.GetInventoryByProductID(productID)
@@ -96,10 +96,10 @@ func (s *InventoryService) ReleaseReservationByOrderID(orderID uuid.UUID, reason
 		return fmt.Errorf("failed to get reservations: %w", err)
 	}
 
-	for _, reservation := range reservations {
-		if reservation.Status == models.ReservationActive {
-			if err := s.repo.ReleaseReservation(&reservation, reason); err != nil {
-				return fmt.Errorf("failed to release reservation %s: %w", reservation.ID, err)
+	for i := range reservations {
+		if reservations[i].Status == models.ReservationActive {
+			if err := s.repo.ReleaseReservation(&reservations[i], reason); err != nil {
+				return fmt.Errorf("failed to release reservation %s: %w", reservations[i].ID, err)
 			}
 		}
 	}

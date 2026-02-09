@@ -66,6 +66,7 @@ func main() {
 
 	eventHandler := events.NewEventHandler(inventoryService, rabbitMQ)
 	if err := eventHandler.StartConsumers(); err != nil {
+		rabbitMQ.Close()
 		log.Fatalf("Failed to start event consumers: %v", err)
 	}
 
@@ -183,23 +184,18 @@ func setupRoutes(router *gin.Engine, inventoryHandler *handler.InventoryHandler,
 	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/api/v1")
-	{
-		products := v1.Group("/products")
-		{
-			products.GET("", productHandler.ListProducts)
-			products.GET("/:id", productHandler.GetProduct)
-			products.POST("", productHandler.CreateProduct)
-			products.PUT("/:id", productHandler.UpdateProduct)
-			products.DELETE("/:id", productHandler.DeleteProduct)
-		}
 
-		inventory := v1.Group("/inventory")
-		{
-			inventory.POST("/reserve", inventoryHandler.ReserveStock)
-			inventory.POST("/release", inventoryHandler.ReleaseReservation)
-			inventory.POST("/confirm/:reservationId", inventoryHandler.ConfirmReservation)
-			inventory.GET("/:productId/stock", inventoryHandler.GetStock)
-			inventory.POST("/:productId/add-stock", inventoryHandler.AddStock)
-		}
-	}
+	products := v1.Group("/products")
+	products.GET("", productHandler.ListProducts)
+	products.GET("/:id", productHandler.GetProduct)
+	products.POST("", productHandler.CreateProduct)
+	products.PUT("/:id", productHandler.UpdateProduct)
+	products.DELETE("/:id", productHandler.DeleteProduct)
+
+	inventory := v1.Group("/inventory")
+	inventory.POST("/reserve", inventoryHandler.ReserveStock)
+	inventory.POST("/release", inventoryHandler.ReleaseReservation)
+	inventory.POST("/confirm/:reservationId", inventoryHandler.ConfirmReservation)
+	inventory.GET("/:productId/stock", inventoryHandler.GetStock)
+	inventory.POST("/:productId/add-stock", inventoryHandler.AddStock)
 }

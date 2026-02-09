@@ -167,7 +167,7 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 	// Process messages
 	go func() {
 		for msg := range msgs {
-			if err := r.handleOrderEvent(msg, onOrderCreated, onOrderCancelled); err != nil {
+			if err := r.handleOrderEvent(&msg, onOrderCreated, onOrderCancelled); err != nil {
 				log.Printf("Error processing order event: %v", err)
 				// Retry logic
 				retryCount := getRetryCount(msg.Headers)
@@ -194,7 +194,7 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 }
 
 func (r *RabbitMQService) handleOrderEvent(
-	msg amqp.Delivery,
+	msg *amqp.Delivery,
 	onOrderCreated func(*OrderCreatedEvent) error,
 	onOrderCancelled func(*OrderCancelledEvent) error,
 ) error {

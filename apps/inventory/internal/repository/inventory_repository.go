@@ -115,7 +115,7 @@ func (r *InventoryRepository) ReleaseExpiredReservations() (int, error) {
 		count = len(reservations)
 
 		// Release each reservation
-		for _, reservation := range reservations {
+		for i := range reservations {
 			// Update inventory
 			if err := tx.Exec(`
 				UPDATE inventory
@@ -123,16 +123,16 @@ func (r *InventoryRepository) ReleaseExpiredReservations() (int, error) {
 					reserved_quantity = reserved_quantity - ?,
 					updated_at = ?
 				WHERE product_id = ?`,
-				reservation.Quantity,
-				reservation.Quantity,
+				reservations[i].Quantity,
+				reservations[i].Quantity,
 				time.Now(),
-				reservation.ProductID,
+				reservations[i].ProductID,
 			).Error; err != nil {
 				return err
 			}
 
 			// Update reservation status
-			if err := tx.Model(&reservation).Update("status", models.ReservationExpired).Error; err != nil {
+			if err := tx.Model(&reservations[i]).Update("status", models.ReservationExpired).Error; err != nil {
 				return err
 			}
 		}
