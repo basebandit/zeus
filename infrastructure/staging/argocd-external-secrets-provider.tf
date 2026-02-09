@@ -33,12 +33,12 @@ data "aws_iam_policy_document" "external_secrets_permissions" {
 }
 
 resource "aws_iam_policy" "external_secrets_policy" {
-  name   = "${aws_eks_cluster.eks.name}-external-secrets-access"
+  name   = "${module.eks.cluster_name}-external-secrets-access"
   policy = data.aws_iam_policy_document.external_secrets_permissions.json
 }
 
 resource "aws_iam_role" "external_secrets" {
-  name               = "${aws_eks_cluster.eks.name}-external-secrets-provider"
+  name               = "${module.eks.cluster_name}-external-secrets-provider"
   assume_role_policy = data.aws_iam_policy_document.external_secrets_assume_role.json
 }
 
@@ -48,20 +48,20 @@ resource "aws_iam_role_policy_attachment" "external_secrets" {
 }
 
 resource "aws_eks_pod_identity_association" "external_secrets" {
-  cluster_name    = aws_eks_cluster.eks.name
+  cluster_name    = module.eks.cluster_name
   namespace       = "external-secrets"
   service_account = "external-secrets"
   role_arn        = aws_iam_role.external_secrets.arn
 }
 
 # data "aws_eks_cluster" "eks" {
-#   name = aws_eks_cluster.eks.name
-#   depends_on = [aws_eks_cluster.eks]  # Add this
+#   name = module.eks.cluster_name
+#   depends_on = [module.eks]  # Add this
 # }
 
 # data "aws_eks_cluster_auth" "eks" {
-#   name = aws_eks_cluster.eks.name
-#   depends_on = [aws_eks_cluster.eks]  # Add this
+#   name = module.eks.cluster_name
+#   depends_on = [module.eks]  # Add this
 # }
 resource "helm_release" "external_secrets" {
   name = "external-secrets"
@@ -74,20 +74,20 @@ resource "helm_release" "external_secrets" {
   timeout = 600 # Increase timeout to 10 minutes
 
   depends_on = [
-    aws_eks_node_group.general,
+    module.eks,
     aws_eks_pod_identity_association.external_secrets,
   ]
 }
 
 resource "null_resource" "configure_kubectl" {
   provisioner "local-exec" {
-    command = "aws --profile ${var.aws_profile} eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.eks.name}"
+    command = "aws --profile ${var.aws_profile} eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}"
   }
 
-  depends_on = [aws_eks_cluster.eks]
+  depends_on = [module.eks]
 
   triggers = {
-    cluster_name = aws_eks_cluster.eks.name
+    cluster_name = module.eks.cluster_name
   }
 }
 
@@ -106,7 +106,7 @@ resource "null_resource" "aws_secretsmanager_store" {
 
   # Only run once during bootstrap
   triggers = {
-    cluster_id = aws_eks_cluster.eks.id
+    cluster_id = module.eks.cluster_arn
   }
 }
 
@@ -125,7 +125,7 @@ resource "null_resource" "argocd_external_secret" {
 
   # Only run once during bootstrap, don't track file changes
   triggers = {
-    cluster_id = aws_eks_cluster.eks.id
+    cluster_id = module.eks.cluster_arn
   }
 }
 
@@ -144,6 +144,6 @@ resource "null_resource" "argocd_git_repo_external_secret" {
 
   # Only run once during bootstrap, don't track file changes
   triggers = {
-    cluster_id = aws_eks_cluster.eks.id
+    cluster_id = module.eks.cluster_arn
   }
 }

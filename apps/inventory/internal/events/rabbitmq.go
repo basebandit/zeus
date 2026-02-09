@@ -143,10 +143,12 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 	}
 
 	// Bind queue to exchange with routing keys
-	if err := r.channel.QueueBind(queue.Name, "order.created", r.exchange, false, nil); err != nil {
+	err = r.channel.QueueBind(queue.Name, "order.created", r.exchange, false, nil)
+	if err != nil {
 		return fmt.Errorf("failed to bind order.created: %w", err)
 	}
-	if err := r.channel.QueueBind(queue.Name, "order.cancelled", r.exchange, false, nil); err != nil {
+	err = r.channel.QueueBind(queue.Name, "order.cancelled", r.exchange, false, nil)
+	if err != nil {
 		return fmt.Errorf("failed to bind order.cancelled: %w", err)
 	}
 
@@ -167,18 +169,24 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 	// Process messages
 	go func() {
 		for msg := range msgs {
-			if err := r.handleOrderEvent(msg, onOrderCreated, onOrderCancelled); err != nil {
+			if err := r.handleOrderEvent(&msg, onOrderCreated, onOrderCancelled); err != nil {
 				log.Printf("Error processing order event: %v", err)
 				// Retry logic
 				retryCount := getRetryCount(msg.Headers)
 				if retryCount < 3 {
-					msg.Nack(false, true) // Requeue
+					if nackErr := msg.Nack(false, true); nackErr != nil {
+						log.Printf("Failed to nack message: %v", nackErr)
+					}
 				} else {
 					log.Printf("Max retries exceeded, sending to DLQ")
-					msg.Nack(false, false) // Don't requeue, goes to DLQ
+					if nackErr := msg.Nack(false, false); nackErr != nil {
+						log.Printf("Failed to nack message to DLQ: %v", nackErr)
+					}
 				}
 			} else {
-				msg.Ack(false)
+				if ackErr := msg.Ack(false); ackErr != nil {
+					log.Printf("Failed to ack message: %v", ackErr)
+				}
 			}
 		}
 	}()
@@ -188,7 +196,7 @@ func (r *RabbitMQService) ConsumeOrderEvents(
 }
 
 func (r *RabbitMQService) handleOrderEvent(
-	msg amqp.Delivery,
+	msg *amqp.Delivery,
 	onOrderCreated func(*OrderCreatedEvent) error,
 	onOrderCancelled func(*OrderCancelledEvent) error,
 ) error {

@@ -1,0 +1,84 @@
+name: Prepare Release - Orders
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+      bump_type:
+        description: 'Version bump type for changelog'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/orders
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/orders/package-lock.json
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+      - name: Update package.json version
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+      - name: Generate CHANGELOG
+        run: npx conventional-changelog-cli -p angular -i CHANGELOG.md -s --release-count 0
+
+      - name: Commit changes
+        run: |
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore(orders): prepare release v${{ github.event.inputs.version }}"
+
+      - name: Create release branch and push
+        run: |
+          git checkout -b orders-release/v${{ github.event.inputs.version }}
+          git push origin orders-release/v${{ github.event.inputs.version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: orders-release/v${{ github.event.inputs.version }}
+          base: main
+          title: 'chore(orders): release v${{ github.event.inputs.version }}'
+          body: |
+            ## Release v${{ github.event.inputs.version }}
+
+            This PR prepares the release of Orders Service v${{ github.event.inputs.version }}.
+
+            ### Checklist
+            - [ ] CHANGELOG.md has been reviewed
+            - [ ] All tests pass
+            - [ ] Ready to merge and tag
+
+            After merging, create the release tag:
+            ```bash
+            git tag orders/v${{ github.event.inputs.version }}
+            git push origin orders/v${{ github.event.inputs.version }}
+            ```

@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/basebandit/zeus/inventory/internal/models"
 	"github.com/basebandit/zeus/inventory/internal/repository"
-	"github.com/google/uuid"
 )
 
 var (
-	ErrInsufficientStock     = errors.New("insufficient stock available")
-	ErrConcurrencyConflict   = errors.New("concurrency conflict, please retry")
-	ErrProductNotFound       = errors.New("product not found")
-	ErrInventoryNotFound     = errors.New("inventory not found")
-	ErrReservationNotFound   = errors.New("reservation not found")
-	ErrInvalidReservation    = errors.New("invalid reservation status")
+	ErrInsufficientStock   = errors.New("insufficient stock available")
+	ErrConcurrencyConflict = errors.New("concurrency conflict, please retry")
+	ErrProductNotFound     = errors.New("product not found")
+	ErrInventoryNotFound   = errors.New("inventory not found")
+	ErrReservationNotFound = errors.New("reservation not found")
+	ErrInvalidReservation  = errors.New("invalid reservation status")
 )
 
 const (
@@ -35,7 +36,7 @@ func NewInventoryService(repo *repository.InventoryRepository) *InventoryService
 }
 
 // ReserveStock reserves inventory for an order with optimistic locking
-func (s *InventoryService) ReserveStock(productID uuid.UUID, orderID uuid.UUID, quantity int) (*models.Reservation, error) {
+func (s *InventoryService) ReserveStock(productID, orderID uuid.UUID, quantity int) (*models.Reservation, error) {
 	for retries := 0; retries < MaxRetries; retries++ {
 		// Get current inventory
 		inv, err := s.repo.GetInventoryByProductID(productID)
@@ -96,10 +97,10 @@ func (s *InventoryService) ReleaseReservationByOrderID(orderID uuid.UUID, reason
 		return fmt.Errorf("failed to get reservations: %w", err)
 	}
 
-	for _, reservation := range reservations {
-		if reservation.Status == models.ReservationActive {
-			if err := s.repo.ReleaseReservation(&reservation, reason); err != nil {
-				return fmt.Errorf("failed to release reservation %s: %w", reservation.ID, err)
+	for i := range reservations {
+		if reservations[i].Status == models.ReservationActive {
+			if err := s.repo.ReleaseReservation(&reservations[i], reason); err != nil {
+				return fmt.Errorf("failed to release reservation %s: %w", reservations[i].ID, err)
 			}
 		}
 	}

@@ -47,13 +47,10 @@ describe('Orders API (e2e)', () => {
 
   describe('/healthz (GET)', () => {
     it('should return health status', () => {
-      return request(app.getHttpServer())
-        .get('/healthz')
-        .expect(200)
-        .expect({
-          status: 'healthy',
-          service: 'orders',
-        });
+      return request(app.getHttpServer()).get('/healthz').expect(200).expect({
+        status: 'healthy',
+        service: 'orders',
+      });
     });
   });
 
@@ -113,13 +110,11 @@ describe('Orders API (e2e)', () => {
     describe('/api/v1/cart (GET)', () => {
       it('should get user cart', async () => {
         // First add item to cart
-        await request(app.getHttpServer())
-          .post('/api/v1/cart/items')
-          .send({
-            userId: testUserId,
-            productId: testProductId1,
-            quantity: 2,
-          });
+        await request(app.getHttpServer()).post('/api/v1/cart/items').send({
+          userId: testUserId,
+          productId: testProductId1,
+          quantity: 2,
+        });
 
         return request(app.getHttpServer())
           .get(`/api/v1/cart?userId=${testUserId}`)
@@ -132,22 +127,18 @@ describe('Orders API (e2e)', () => {
       });
 
       it('should return 404 for empty cart', () => {
-        return request(app.getHttpServer())
-          .get(`/api/v1/cart?userId=${testUserId}`)
-          .expect(404);
+        return request(app.getHttpServer()).get(`/api/v1/cart?userId=${testUserId}`).expect(404);
       });
     });
 
     describe('/api/v1/cart/items/:itemId (DELETE)', () => {
       it('should remove item from cart', async () => {
         // First add item to cart
-        const addResponse = await request(app.getHttpServer())
-          .post('/api/v1/cart/items')
-          .send({
-            userId: testUserId,
-            productId: testProductId1,
-            quantity: 2,
-          });
+        const addResponse = await request(app.getHttpServer()).post('/api/v1/cart/items').send({
+          userId: testUserId,
+          productId: testProductId1,
+          quantity: 2,
+        });
 
         const itemId = addResponse.body.items[0].id;
 
@@ -271,29 +262,33 @@ describe('Orders API (e2e)', () => {
     describe('/api/v1/orders (GET)', () => {
       it('should list user orders with pagination', async () => {
         // Create multiple orders
-        await request(app.getHttpServer()).post('/api/v1/orders').send({
-          userId: testUserId,
-          items: [{ productId: testProductId1, quantity: 1 }],
-          shippingAddress: {
-            street: '123 Main St',
-            city: 'San Francisco',
-            state: 'CA',
-            zipCode: '94105',
-            country: 'US',
-          },
-        });
+        await request(app.getHttpServer())
+          .post('/api/v1/orders')
+          .send({
+            userId: testUserId,
+            items: [{ productId: testProductId1, quantity: 1 }],
+            shippingAddress: {
+              street: '123 Main St',
+              city: 'San Francisco',
+              state: 'CA',
+              zipCode: '94105',
+              country: 'US',
+            },
+          });
 
-        await request(app.getHttpServer()).post('/api/v1/orders').send({
-          userId: testUserId,
-          items: [{ productId: testProductId2, quantity: 2 }],
-          shippingAddress: {
-            street: '456 Oak Ave',
-            city: 'Los Angeles',
-            state: 'CA',
-            zipCode: '90001',
-            country: 'US',
-          },
-        });
+        await request(app.getHttpServer())
+          .post('/api/v1/orders')
+          .send({
+            userId: testUserId,
+            items: [{ productId: testProductId2, quantity: 2 }],
+            shippingAddress: {
+              street: '456 Oak Ave',
+              city: 'Los Angeles',
+              state: 'CA',
+              zipCode: '90001',
+              country: 'US',
+            },
+          });
 
         return request(app.getHttpServer())
           .get(`/api/v1/orders?userId=${testUserId}&limit=10&offset=0`)
@@ -309,17 +304,19 @@ describe('Orders API (e2e)', () => {
       it('should support pagination', async () => {
         // Create orders
         for (let i = 0; i < 3; i++) {
-          await request(app.getHttpServer()).post('/api/v1/orders').send({
-            userId: testUserId,
-            items: [{ productId: testProductId1, quantity: 1 }],
-            shippingAddress: {
-              street: `${i} Main St`,
-              city: 'San Francisco',
-              state: 'CA',
-              zipCode: '94105',
-              country: 'US',
-            },
-          });
+          await request(app.getHttpServer())
+            .post('/api/v1/orders')
+            .send({
+              userId: testUserId,
+              items: [{ productId: testProductId1, quantity: 1 }],
+              shippingAddress: {
+                street: `${i} Main St`,
+                city: 'San Francisco',
+                state: 'CA',
+                zipCode: '94105',
+                country: 'US',
+              },
+            });
         }
 
         return request(app.getHttpServer())
@@ -376,14 +373,10 @@ describe('Orders API (e2e)', () => {
         const orderId = createResponse.body.id;
 
         // Cancel once
-        await request(app.getHttpServer())
-          .put(`/api/v1/orders/${orderId}/cancel`)
-          .expect(200);
+        await request(app.getHttpServer()).put(`/api/v1/orders/${orderId}/cancel`).expect(200);
 
         // Try to cancel again
-        return request(app.getHttpServer())
-          .put(`/api/v1/orders/${orderId}/cancel`)
-          .expect(400);
+        return request(app.getHttpServer()).put(`/api/v1/orders/${orderId}/cancel`).expect(400);
       });
     });
   });
@@ -441,9 +434,7 @@ describe('Orders API (e2e)', () => {
       expect(orderResponse.body.status).toBe('pending');
 
       // 4. Get order details
-      await request(app.getHttpServer())
-        .get(`/api/v1/orders/${orderId}`)
-        .expect(200);
+      await request(app.getHttpServer()).get(`/api/v1/orders/${orderId}`).expect(200);
 
       // 5. List user orders
       const listResponse = await request(app.getHttpServer())
@@ -453,9 +444,7 @@ describe('Orders API (e2e)', () => {
       expect(listResponse.body.data.length).toBeGreaterThan(0);
 
       // 6. Cancel order
-      await request(app.getHttpServer())
-        .put(`/api/v1/orders/${orderId}/cancel`)
-        .expect(200);
+      await request(app.getHttpServer()).put(`/api/v1/orders/${orderId}/cancel`).expect(200);
 
       // 7. Verify order is cancelled
       const finalOrderResponse = await request(app.getHttpServer())

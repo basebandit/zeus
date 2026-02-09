@@ -1,13 +1,15 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/basebandit/zeus/inventory/internal/events"
-	"github.com/basebandit/zeus/inventory/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"github.com/basebandit/zeus/inventory/internal/events"
+	"github.com/basebandit/zeus/inventory/internal/service"
 )
 
 type InventoryHandler struct {
@@ -31,12 +33,12 @@ type ReserveStockRequest struct {
 
 // ReleaseReservationRequest represents the request to release a reservation
 type ReleaseReservationRequest struct {
-	ReservationID uuid.UUID `json:"reservationId" binding:"required"`
 	Reason        string    `json:"reason"`
+	ReservationID uuid.UUID `json:"reservationId" binding:"required"`
 }
 
 // AddStockRequest represents the request to add stock
-type AddStockRequest struct{
+type AddStockRequest struct {
 	Quantity int `json:"quantity" binding:"required,gt=0"`
 }
 
@@ -131,7 +133,9 @@ func (h *InventoryHandler) ConfirmReservation(c *gin.Context) {
 		// OrderID and items would need to be fetched from reservation
 		Timestamp: time.Now(),
 	}
-	h.rabbitMQ.PublishInventoryConfirmed(confirmedEvent)
+	if err := h.rabbitMQ.PublishInventoryConfirmed(confirmedEvent); err != nil {
+		log.Printf("Failed to publish inventory confirmed event: %v", err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Reservation confirmed successfully"})
 }

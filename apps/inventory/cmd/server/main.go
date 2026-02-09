@@ -7,11 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/basebandit/zeus/inventory/internal/config"
-	"github.com/basebandit/zeus/inventory/internal/events"
-	"github.com/basebandit/zeus/inventory/internal/handler"
-	"github.com/basebandit/zeus/inventory/internal/repository"
-	"github.com/basebandit/zeus/inventory/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	migratepostgres "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -21,6 +16,12 @@ import (
 	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/basebandit/zeus/inventory/internal/config"
+	"github.com/basebandit/zeus/inventory/internal/events"
+	"github.com/basebandit/zeus/inventory/internal/handler"
+	"github.com/basebandit/zeus/inventory/internal/repository"
+	"github.com/basebandit/zeus/inventory/internal/service"
 
 	_ "github.com/basebandit/zeus/inventory/docs" // Swagger docs
 )
@@ -51,7 +52,8 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	if err := runMigrations(db); err != nil {
+	err = runMigrations(db)
+	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -62,12 +64,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize RabbitMQ: %v", err)
 	}
-	defer rabbitMQ.Close()
 
 	eventHandler := events.NewEventHandler(inventoryService, rabbitMQ)
 	if err := eventHandler.StartConsumers(); err != nil {
+		rabbitMQ.Close()
 		log.Fatalf("Failed to start event consumers: %v", err)
 	}
+	defer rabbitMQ.Close()
 
 	scheduler := service.NewReservationScheduler(inventoryService)
 	scheduler.Start()
@@ -100,7 +103,7 @@ func main() {
 	log.Printf("Inventory service starting on %s", addr)
 	log.Printf("API Documentation available at: http://localhost:%s/api/docs/index.html", cfg.Server.Port)
 	if err := router.Run(addr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Printf("Failed to start server: %v", err)
 	}
 }
 
@@ -183,23 +186,18 @@ func setupRoutes(router *gin.Engine, inventoryHandler *handler.InventoryHandler,
 	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/api/v1")
-	{
-		products := v1.Group("/products")
-		{
-			products.GET("", productHandler.ListProducts)
-			products.GET("/:id", productHandler.GetProduct)
-			products.POST("", productHandler.CreateProduct)
-			products.PUT("/:id", productHandler.UpdateProduct)
-			products.DELETE("/:id", productHandler.DeleteProduct)
-		}
 
-		inventory := v1.Group("/inventory")
-		{
-			inventory.POST("/reserve", inventoryHandler.ReserveStock)
-			inventory.POST("/release", inventoryHandler.ReleaseReservation)
-			inventory.POST("/confirm/:reservationId", inventoryHandler.ConfirmReservation)
-			inventory.GET("/:productId/stock", inventoryHandler.GetStock)
-			inventory.POST("/:productId/add-stock", inventoryHandler.AddStock)
-		}
-	}
+	products := v1.Group("/products")
+	products.GET("", productHandler.ListProducts)
+	products.GET("/:id", productHandler.GetProduct)
+	products.POST("", productHandler.CreateProduct)
+	products.PUT("/:id", productHandler.UpdateProduct)
+	products.DELETE("/:id", productHandler.DeleteProduct)
+
+	inventory := v1.Group("/inventory")
+	inventory.POST("/reserve", inventoryHandler.ReserveStock)
+	inventory.POST("/release", inventoryHandler.ReleaseReservation)
+	inventory.POST("/confirm/:reservationId", inventoryHandler.ConfirmReservation)
+	inventory.GET("/:productId/stock", inventoryHandler.GetStock)
+	inventory.POST("/:productId/add-stock", inventoryHandler.AddStock)
 }
