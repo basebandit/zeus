@@ -301,9 +301,9 @@ describe('OrderService', () => {
     it('should throw error if order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.handlePaymentCompleted('order-123', 'payment-123'),
-      ).rejects.toThrow('Order not found');
+      await expect(service.handlePaymentCompleted('order-123', 'payment-123')).rejects.toThrow(
+        'Order not found',
+      );
     });
   });
 
@@ -358,9 +358,7 @@ describe('OrderService', () => {
     it('should throw error if order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.cancelOrder('order-123')).rejects.toThrow(
-        'Order not found',
-      );
+      await expect(service.cancelOrder('order-123')).rejects.toThrow('Order not found');
     });
 
     it('should throw error if order is shipped', async () => {

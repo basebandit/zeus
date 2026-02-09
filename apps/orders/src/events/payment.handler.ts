@@ -14,17 +14,11 @@ export class PaymentEventHandler {
 
       this.logger.log(`Processing payment.completed event for order ${event.orderId}`);
 
-      await this.orderService.handlePaymentCompleted(
-        event.orderId,
-        event.paymentId,
-      );
+      await this.orderService.handlePaymentCompleted(event.orderId, event.paymentId);
 
       this.logger.log(`Successfully processed payment.completed for order ${event.orderId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to process payment.completed event: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to process payment.completed event: ${error.message}`, error.stack);
       throw error; // Re-throw to trigger retry mechanism
     }
   }
@@ -39,10 +33,7 @@ export class PaymentEventHandler {
 
       this.logger.log(`Successfully processed payment.failed for order ${event.orderId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to process payment.failed event: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to process payment.failed event: ${error.message}`, error.stack);
       throw error;
     }
   }

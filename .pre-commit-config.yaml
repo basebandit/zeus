@@ -54,7 +54,7 @@ repos:
     hooks:
       - id: golangci-lint-inventory
         name: 'golangci-lint (inventory)'
-        entry: bash -c 'cd apps/inventory && (command -v golangci-lint >/dev/null 2>&1 || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.2) && golangci-lint run --fix'
+        entry: bash -c 'export PATH="$HOME/go/bin:$PATH" && cd apps/inventory && (command -v golangci-lint >/dev/null 2>&1 || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.2) && golangci-lint run --fix'
         language: system
         files: ^apps/inventory/.*\.go$
         pass_filenames: false
