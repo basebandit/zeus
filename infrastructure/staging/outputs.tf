@@ -34,7 +34,8 @@ output "vpc_public_subnet_cidr_blocks" {
 }
 
 output "vpc_nat_gateway_static_public_ip" {
-  value = module.vpc.nat_public_ips[0]
+  value       = try(module.vpc.nat_public_ips[0], null)
+  description = "Public IP of the NAT Gateway (null if NAT gateway is disabled)"
 }
 
 output "private_subnet_ids" {
@@ -53,8 +54,8 @@ output "internet_gateway_id" {
 }
 
 output "nat_gateway_id" {
-  value       = module.vpc.natgw_ids[0]
-  description = "ID of the NAT Gateway"
+  value       = try(module.vpc.natgw_ids[0], null)
+  description = "ID of the NAT Gateway (null if NAT gateway is disabled)"
 }
 
 # ===================================================
