@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	ErrInsufficientStock     = errors.New("insufficient stock available")
-	ErrConcurrencyConflict   = errors.New("concurrency conflict, please retry")
-	ErrProductNotFound       = errors.New("product not found")
-	ErrInventoryNotFound     = errors.New("inventory not found")
-	ErrReservationNotFound   = errors.New("reservation not found")
-	ErrInvalidReservation    = errors.New("invalid reservation status")
+	ErrInsufficientStock   = errors.New("insufficient stock available")
+	ErrConcurrencyConflict = errors.New("concurrency conflict, please retry")
+	ErrProductNotFound     = errors.New("product not found")
+	ErrInventoryNotFound   = errors.New("inventory not found")
+	ErrReservationNotFound = errors.New("reservation not found")
+	ErrInvalidReservation  = errors.New("invalid reservation status")
 )
 
 const (

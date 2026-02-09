@@ -36,7 +36,7 @@ type ReleaseReservationRequest struct {
 }
 
 // AddStockRequest represents the request to add stock
-type AddStockRequest struct{
+type AddStockRequest struct {
 	Quantity int `json:"quantity" binding:"required,gt=0"`
 }
 

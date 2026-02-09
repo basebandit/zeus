@@ -117,10 +117,10 @@ func (h *EventHandler) HandleOrderCancelled(event *OrderCancelledEvent) error {
 
 func (h *EventHandler) publishLowStockAlert(productID uuid.UUID, inv interface{}) {
 	alertEvent := &LowStockAlertEvent{
-		EventType: "inventory.low_stock",
-		ProductID: productID,
+		EventType:   "inventory.low_stock",
+		ProductID:   productID,
 		ProductName: "", // Could fetch product name here if needed
-		Timestamp: time.Now(),
+		Timestamp:   time.Now(),
 	}
 	if err := h.rabbitMQ.PublishLowStockAlert(alertEvent); err != nil {
 		log.Printf("Failed to publish low stock alert: %v", err)

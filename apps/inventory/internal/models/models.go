@@ -25,15 +25,15 @@ type Product struct {
 
 // Inventory represents stock levels for a product
 type Inventory struct {
-	ID                 uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ProductID          uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"productId"`
-	Product            *Product  `gorm:"foreignKey:ProductID" json:"product,omitempty"`
-	WarehouseLocation  string    `gorm:"type:varchar(100);not null;default:'MAIN'" json:"warehouseLocation"`
-	AvailableQuantity  int       `gorm:"not null;default:0;check:available_quantity >= 0" json:"availableQuantity"`
-	ReservedQuantity   int       `gorm:"not null;default:0;check:reserved_quantity >= 0" json:"reservedQuantity"`
-	LowStockThreshold  int       `gorm:"not null;default:10" json:"lowStockThreshold"`
-	Version            int       `gorm:"not null;default:1" json:"version"` // For optimistic locking
-	UpdatedAt          time.Time `json:"updatedAt"`
+	ID                uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ProductID         uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"productId"`
+	Product           *Product  `gorm:"foreignKey:ProductID" json:"product,omitempty"`
+	WarehouseLocation string    `gorm:"type:varchar(100);not null;default:'MAIN'" json:"warehouseLocation"`
+	AvailableQuantity int       `gorm:"not null;default:0;check:available_quantity >= 0" json:"availableQuantity"`
+	ReservedQuantity  int       `gorm:"not null;default:0;check:reserved_quantity >= 0" json:"reservedQuantity"`
+	LowStockThreshold int       `gorm:"not null;default:10" json:"lowStockThreshold"`
+	Version           int       `gorm:"not null;default:1" json:"version"` // For optimistic locking
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 // TotalQuantity is a computed field

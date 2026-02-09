@@ -33,13 +33,13 @@ type OrderCancelledEvent struct {
 
 // InventoryReservedEvent is published when inventory is successfully reserved
 type InventoryReservedEvent struct {
-	EventType     string                     `json:"eventType"`
-	OrderID       uuid.UUID                  `json:"orderId"`
-	ReservationID uuid.UUID                  `json:"reservationId"`
-	Items         []ReservedInventoryItem    `json:"items"`
-	UserID        uuid.UUID                  `json:"userId"`
-	TotalAmount   float64                    `json:"totalAmount"`
-	Timestamp     time.Time                  `json:"timestamp"`
+	EventType     string                  `json:"eventType"`
+	OrderID       uuid.UUID               `json:"orderId"`
+	ReservationID uuid.UUID               `json:"reservationId"`
+	Items         []ReservedInventoryItem `json:"items"`
+	UserID        uuid.UUID               `json:"userId"`
+	TotalAmount   float64                 `json:"totalAmount"`
+	Timestamp     time.Time               `json:"timestamp"`
 }
 
 type ReservedInventoryItem struct {
@@ -49,11 +49,11 @@ type ReservedInventoryItem struct {
 
 // InventoryReservationFailedEvent is published when reservation fails
 type InventoryReservationFailedEvent struct {
-	EventType string                      `json:"eventType"`
-	OrderID   uuid.UUID                   `json:"orderId"`
-	Items     []FailedInventoryItem       `json:"items"`
-	Reason    string                      `json:"reason"`
-	Timestamp time.Time                   `json:"timestamp"`
+	EventType string                `json:"eventType"`
+	OrderID   uuid.UUID             `json:"orderId"`
+	Items     []FailedInventoryItem `json:"items"`
+	Reason    string                `json:"reason"`
+	Timestamp time.Time             `json:"timestamp"`
 }
 
 type FailedInventoryItem struct {
@@ -64,19 +64,19 @@ type FailedInventoryItem struct {
 
 // InventoryReleasedEvent is published when inventory reservation is released
 type InventoryReleasedEvent struct {
-	EventType string                     `json:"eventType"`
-	OrderID   uuid.UUID                  `json:"orderId"`
-	Items     []ReservedInventoryItem    `json:"items"`
-	Reason    string                     `json:"reason"`
-	Timestamp time.Time                  `json:"timestamp"`
+	EventType string                  `json:"eventType"`
+	OrderID   uuid.UUID               `json:"orderId"`
+	Items     []ReservedInventoryItem `json:"items"`
+	Reason    string                  `json:"reason"`
+	Timestamp time.Time               `json:"timestamp"`
 }
 
 // InventoryConfirmedEvent is published when reservation is confirmed (stock deducted)
 type InventoryConfirmedEvent struct {
-	EventType string                     `json:"eventType"`
-	OrderID   uuid.UUID                  `json:"orderId"`
-	Items     []ReservedInventoryItem    `json:"items"`
-	Timestamp time.Time                  `json:"timestamp"`
+	EventType string                  `json:"eventType"`
+	OrderID   uuid.UUID               `json:"orderId"`
+	Items     []ReservedInventoryItem `json:"items"`
+	Timestamp time.Time               `json:"timestamp"`
 }
 
 // LowStockAlertEvent is published when inventory falls below threshold
