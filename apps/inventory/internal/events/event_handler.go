@@ -5,8 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/basebandit/zeus/inventory/internal/service"
 	"github.com/google/uuid"
+
+	"github.com/basebandit/zeus/inventory/internal/service"
 )
 
 type EventHandler struct {

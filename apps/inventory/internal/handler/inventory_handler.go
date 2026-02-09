@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/basebandit/zeus/inventory/internal/events"
-	"github.com/basebandit/zeus/inventory/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"github.com/basebandit/zeus/inventory/internal/events"
+	"github.com/basebandit/zeus/inventory/internal/service"
 )
 
 type InventoryHandler struct {

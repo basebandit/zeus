@@ -3,9 +3,10 @@ package repository
 import (
 	"time"
 
-	"github.com/basebandit/zeus/inventory/internal/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/basebandit/zeus/inventory/internal/models"
 )
 
 type InventoryRepository struct {

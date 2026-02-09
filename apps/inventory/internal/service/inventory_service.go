@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/basebandit/zeus/inventory/internal/models"
 	"github.com/basebandit/zeus/inventory/internal/repository"
-	"github.com/google/uuid"
 )
 
 var (

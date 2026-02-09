@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/basebandit/zeus/inventory/internal/models"
-	"github.com/basebandit/zeus/inventory/internal/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"github.com/basebandit/zeus/inventory/internal/models"
+	"github.com/basebandit/zeus/inventory/internal/repository"
 )
 
 type ProductHandler struct {

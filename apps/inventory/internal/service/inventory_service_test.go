@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/basebandit/zeus/inventory/internal/models"
 	"github.com/google/uuid"
+
+	"github.com/basebandit/zeus/inventory/internal/models"
 )
 
 func TestCreateProduct(t *testing.T) {
