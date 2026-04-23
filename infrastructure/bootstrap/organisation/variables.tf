@@ -20,3 +20,13 @@ variable "management_account_id" {
 variable "account_email_prefix" {
   type = string
 }
+
+variable "organization_monthly_budget_usd" {
+  description = "Monthly AWS cost budget threshold for the organization."
+  type        = number
+}
+
+variable "budget_alert_email" {
+  description = "Email address that receives organization budget alerts."
+  type        = string
+}
