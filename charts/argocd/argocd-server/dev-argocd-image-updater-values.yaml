@@ -1,0 +1,24 @@
+---
+serviceAccount:
+  name: argocd-image-updater
+
+# Images are replicated from the shared account into this (dev) account's ECR,
+# so the registry is same-account. The pod-identity role attached to this
+# service account (created in module argocd-platform) has ECR read on this
+# account, so a plain get-authorization-token is enough — no assume-role.
+authScripts:
+  enabled: true
+  scripts:
+    auth.sh: |
+      #!/bin/sh
+      aws ecr --region eu-central-1 get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
+
+config:
+  registries:
+    - name: ECR
+      api_url: https://892880329567.dkr.ecr.eu-central-1.amazonaws.com
+      prefix: 892880329567.dkr.ecr.eu-central-1.amazonaws.com
+      ping: yes
+      insecure: no
+      credentials: ext:/scripts/auth.sh
+      credsexpire: 10h

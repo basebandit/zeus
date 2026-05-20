@@ -1,0 +1,75 @@
+projects:
+  dev-project-apps:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: A logical grouping of dev applications in the dev basebandit eks cluster
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+      - "https://argoproj.github.io/argo-helm"
+    # This meta-project only creates Applications and AppProjects (via the
+    # argocd-apps chart) into the argocd namespace, so scope it to that.
+    destinations:
+      - namespace: argocd
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist: []
+    clusterResourceBlacklist: []
+    namespaceResourceBlacklist: []
+    orphanedResources:
+      warn: false
+    roles: []
+    namespaceResourceWhitelist:
+      - group: argoproj.io
+        kind: Application
+      - group: argoproj.io
+        kind: AppProject
+applicationsets:
+  dev-project-app-set:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    goTemplate: true
+    generators:
+      - git:
+          repoURL: git@github.com:basebandit/zeus.git
+          revision: main
+          files:
+            - path: charts/argocd/argocd-apps/dev/*.yaml
+    template:
+      metadata:
+        name: '{{ index (splitList "." .path.filenameNormalized) 0 }}'
+        labels: {}
+        annotations: {}
+      spec:
+        project: 'dev-project-apps'
+        sources:
+          - repoURL: "https://argoproj.github.io/argo-helm"
+            chart: argocd-apps
+            targetRevision: 2.0.2
+            helm:
+              valueFiles:
+                - $values/charts/argocd/argocd-apps/dev/{{ .path.filename }}
+          - repoURL: "git@github.com:basebandit/zeus.git"
+            targetRevision: main
+            ref: values
+        destination:
+          server: "https://kubernetes.default.svc"
+          namespace: argocd
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+        # Server-side apply makes ArgoCD a polite field manager: it owns the
+        # fields it sets and tolerates other controllers (HPA, Istio injector,
+        # admission webhooks) owning theirs, instead of fighting over drift.
+        # Setting it here applies it to every app this ApplicationSet generates.
+        syncOptions:
+          - Validate=false
+          - PruneLast=true
+          - CreateNamespace=true
+          - ServerSideApply=true
+    syncPolicy:
+      preserveResourceOnDeletion: true
+      applicationSync: create-update

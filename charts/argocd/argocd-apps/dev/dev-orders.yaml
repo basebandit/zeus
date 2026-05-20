@@ -1,0 +1,66 @@
+projects:
+  dev-orders-apps:
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: A logical grouping of orders applications in the dev basebandit eks cluster
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+    destinations:
+      - namespace: orders
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist: []
+    clusterResourceBlacklist: []
+    namespaceResourceBlacklist:
+      - group: ""
+        kind: ResourceQuota
+      - group: ""
+        kind: LimitRange
+      - group: ""
+        kind: NetworkPolicy
+    orphanedResources:
+      warn: false
+    roles: []
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+applications:
+  orders:
+    namespace: argocd
+    project: dev-orders-apps
+    additionalLabels: {}
+    additionalAnnotations:
+      argocd-image-updater.argoproj.io/image-list: orders=892880329567.dkr.ecr.eu-central-1.amazonaws.com/orders
+      argocd-image-updater.argoproj.io/orders.update-strategy: semver
+      argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/zeus-repo
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    revisionHistoryLimit: 10
+    source:
+      repoURL: git@github.com:basebandit/zeus.git
+      path: charts/orders
+      helm:
+        valueFiles:
+          - dev-values.yaml
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: orders
+    syncPolicy:
+      automated:
+        allowEmpty: false
+        prune: true
+        selfHeal: true
+      retry:
+        backoff:
+          duration: 5s
+          factor: 2
+          maxDuration: 3m
+        limit: 5
+      syncOptions:
+        - Validate=true
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        - PruneLast=true
+        - ServerSideApply=true

@@ -1,0 +1,40 @@
+configs:
+  secret:
+    # argocd-secret is created via External Secrets (see module argocd-platform).
+    createSecret: false
+  params:
+    server.insecure: true # TLS terminated at the ingress
+
+# Dev runs on small nodes — single replicas, no redis-ha.
+controller:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+server:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+repoServer:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+redis-ha:
+  enabled: false
