@@ -14,6 +14,13 @@ variable "bootstrap_role_arn" {
   type        = string
 }
 
+# --- ArgoCD -----------------------------------------------------------------
+variable "argocd_repo_url" {
+  description = "Git URL ArgoCD pulls manifests from."
+  type        = string
+  default     = "git@github.com:basebandit/zeus.git"
+}
+
 # --- Workload: EKS ----------------------------------------------------------
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster."
