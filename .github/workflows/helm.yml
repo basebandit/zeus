@@ -1,0 +1,47 @@
+name: Helm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "charts/**"
+      - ".github/workflows/helm.yml"
+  pull_request:
+    paths:
+      - "charts/**"
+      - ".github/workflows/helm.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  charts:
+    name: lint / render / yaml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: latest
+
+      - name: Helm lint
+        run: |
+          set -euo pipefail
+          for c in charts/argocd/platform/cluster-secret-store charts/orders charts/payments; do
+            [ -f "$c/Chart.yaml" ] && { echo "== lint $c =="; helm lint "$c"; }
+          done
+
+      - name: Helm render (region templating)
+        run: helm template csstore charts/argocd/platform/cluster-secret-store --set region=eu-central-1 >/dev/null
+
+      - name: YAML lint (argocd manifests)
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: charts/argocd/apps charts/argocd/platform charts/argocd/install
+          config_data: |
+            extends: relaxed
+            ignore: |
+              **/templates/**
+            rules:
+              line-length: disable
