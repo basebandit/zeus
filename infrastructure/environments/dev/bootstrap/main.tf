@@ -37,8 +37,8 @@ module "argocd" {
     kubernetes = kubernetes
   }
 
-  argocd_values_file      = "${local.charts}/argocd-server/dev-argocd-values.yaml"
-  argocd_apps_values_file = "${local.charts}/argocd-apps/_project-app-sets/dev-project-app-set.yaml"
+  argocd_values_file      = "${local.charts}/install/dev/argocd-values.yaml"
+  argocd_apps_values_file = "${local.charts}/install/dev/appsets.yaml"
 
   repo_url             = local.repo_cfg.url
   repo_ssh_private_key = local.repo_cfg.sshPrivateKey
