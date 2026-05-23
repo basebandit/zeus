@@ -1,0 +1,3 @@
+# Region of the AWS Secrets Manager that the ClusterSecretStore reads from.
+# Overridden by the caller (the ArgoCD Application in argocd-apps/dev).
+region: eu-central-1

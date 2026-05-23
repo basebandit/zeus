@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dev-image-updater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: dev-platform
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argocd-image-updater
+    targetRevision: 0.12.3
+    helm:
+      # Images replicate from shared into this account, so the registry is
+      # same-account; the argocd-image-updater Pod Identity role grants ECR read.
+      values: |
+        serviceAccount:
+          name: argocd-image-updater
+        authScripts:
+          enabled: true
+          scripts:
+            auth.sh: |
+              #!/bin/sh
+              aws ecr --region eu-central-1 get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
+        config:
+          registries:
+            - name: ECR
+              api_url: https://892880329567.dkr.ecr.eu-central-1.amazonaws.com
+              prefix: 892880329567.dkr.ecr.eu-central-1.amazonaws.com
+              ping: yes
+              insecure: no
+              credentials: ext:/scripts/auth.sh
+              credsexpire: 10h
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

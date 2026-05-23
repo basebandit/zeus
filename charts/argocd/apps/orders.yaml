@@ -1,0 +1,6 @@
+# User application parameters, consumed by the dev-apps ApplicationSet
+# (install/dev/appsets.yaml). Env-agnostic: the ApplicationSet supplies the repo,
+# revision, ECR registry, image-updater annotations, and values-<env>.yaml.
+name: orders
+namespace: orders
+path: charts/orders

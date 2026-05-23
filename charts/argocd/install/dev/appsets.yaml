@@ -1,0 +1,120 @@
+# Values for the argocd-apps Helm chart, installed once by Terraform (the dev
+# bootstrap root). This is the only thing Terraform renders into ArgoCD; from
+# here ArgoCD owns everything.
+#
+# It creates:
+#   - projects:        dev-platform (third-party tools) + dev-apps (user apps)
+#   - applications:    platform-root  -> app-of-apps over charts/argocd/platform/*
+#   - applicationsets: dev-apps       -> one Application per charts/argocd/apps/*.yaml
+#
+# See charts/argocd/README.md for the full chain.
+
+projects:
+  # Third-party / opensource cluster tools. Broad: they install CRDs and other
+  # cluster-scoped resources across the external-secrets and argocd namespaces.
+  dev-platform:
+    namespace: argocd
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: Opensource / third-party cluster tools (dev)
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+      - "https://argoproj.github.io/argo-helm"
+      - "https://charts.external-secrets.io"
+    destinations:
+      - namespace: argocd
+        server: https://kubernetes.default.svc
+      - namespace: external-secrets
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist:
+      - group: "*"
+        kind: "*"
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+
+  # First-party user applications. Scoped: no cluster-scoped resources, only
+  # their own namespaces.
+  dev-apps:
+    namespace: argocd
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    description: First-party user applications (dev)
+    sourceRepos:
+      - "git@github.com:basebandit/zeus.git"
+    destinations:
+      - namespace: orders
+        server: https://kubernetes.default.svc
+      - namespace: payments
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist: []
+    namespaceResourceWhitelist:
+      - group: "*"
+        kind: "*"
+
+applications:
+  # app-of-apps: applies the real Application manifests under charts/argocd/platform/.
+  # recurse=false keeps it to the top-level *.yaml (skips the cluster-secret-store chart dir).
+  platform-root:
+    namespace: argocd
+    project: dev-platform
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    source:
+      repoURL: "git@github.com:basebandit/zeus.git"
+      targetRevision: main
+      path: charts/argocd/platform
+      directory:
+        recurse: false
+        include: "*.yaml"
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - ServerSideApply=true
+
+applicationsets:
+  # One Application per file in charts/argocd/apps/. Files are env-agnostic
+  # (name/namespace/path); this dev ApplicationSet supplies the env-specific
+  # bits: values-dev.yaml, the dev ECR registry, repo, and revision.
+  dev-apps:
+    namespace: argocd
+    goTemplate: true
+    goTemplateOptions: ["missingkey=error"]
+    generators:
+      - git:
+          repoURL: "git@github.com:basebandit/zeus.git"
+          revision: main
+          files:
+            - path: charts/argocd/apps/*.yaml
+    template:
+      metadata:
+        name: "dev-{{ .name }}"
+        namespace: argocd
+        annotations:
+          argocd-image-updater.argoproj.io/image-list: "{{ .name }}=892880329567.dkr.ecr.eu-central-1.amazonaws.com/{{ .name }}"
+          argocd-image-updater.argoproj.io/{{ .name }}.update-strategy: semver
+          argocd-image-updater.argoproj.io/write-back-method: "git:secret:argocd/zeus-repo"
+      spec:
+        project: dev-apps
+        source:
+          repoURL: "git@github.com:basebandit/zeus.git"
+          targetRevision: main
+          path: "{{ .path }}"
+          helm:
+            valueFiles:
+              - values-dev.yaml
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: "{{ .namespace }}"
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+          syncOptions:
+            - CreateNamespace=true
+            - ServerSideApply=true
