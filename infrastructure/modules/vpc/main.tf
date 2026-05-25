@@ -8,9 +8,8 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Private-only VPC: nodes have no public IPs and no internet route. Egress to AWS
-# services is via VPC endpoints below (no NAT gateway). Public subnets / IGW are
-# intentionally omitted until internet-facing ingress is actually needed.
+# Private-only: no public subnets, IGW or NAT. Node egress is via the VPC
+# endpoints below.
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -38,11 +37,7 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
-# ---------------------------------------------------------------------------
-# VPC endpoints — let private nodes reach AWS without a NAT gateway.
-# ---------------------------------------------------------------------------
-
-# S3 gateway endpoint (free). ECR stores image layers in S3.
+# S3 gateway endpoint (free) — ECR layer storage.
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -54,7 +49,6 @@ resource "aws_vpc_endpoint" "s3" {
   }
 }
 
-# Security group for the interface endpoints: HTTPS from within the VPC.
 resource "aws_security_group" "endpoints" {
   name        = "${var.env}-vpc-endpoints"
   description = "Allow HTTPS from the VPC to interface endpoints"
@@ -68,8 +62,7 @@ resource "aws_security_group" "endpoints" {
     cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
-  # No egress rule: interface endpoints only respond to ingress, they don't
-  # initiate outbound connections. Omitting egress = deny-all out.
+  # No egress: endpoints only respond to ingress.
 
   tags = {
     Name = "${var.env}-vpc-endpoints"

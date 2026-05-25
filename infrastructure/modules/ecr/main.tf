@@ -27,9 +27,7 @@ resource "aws_ecr_lifecycle_policy" "this" {
   })
 }
 
-# Cross-account pull: allow workload accounts to pull images. Pulling still
-# requires an ECR auth token issued by THIS account (see the reader role below
-# or an imagePullSecret) — the repository policy only authorizes the layers.
+# Cross-account pull authorization (token still issued by this account).
 data "aws_iam_policy_document" "repo" {
   count = length(var.pull_account_ids) > 0 ? 1 : 0
 
@@ -58,9 +56,7 @@ resource "aws_ecr_repository_policy" "this" {
   policy     = data.aws_iam_policy_document.repo[0].json
 }
 
-# Reader role: image-updaters in the workload accounts assume this (it lives in
-# the ECR-owning account) so GetAuthorizationToken returns a token valid for
-# this registry.
+# Reader role workload accounts assume for a token valid against this registry.
 data "aws_iam_policy_document" "reader_trust" {
   count = length(var.reader_principal_arns) > 0 ? 1 : 0
 

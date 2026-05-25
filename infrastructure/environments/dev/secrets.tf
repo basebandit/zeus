@@ -1,11 +1,6 @@
-# ArgoCD bootstrap secrets, generated and stored in SecretsManager. The bootstrap
-# root reads these to create ArgoCD's repo + admin secrets; External Secrets
-# reads the same path for app-level secrets. This replaces the old manual seeding.
-#
-# NOTE: the SSH private key lands in Terraform state — keep the S3 backend
-# encrypted (it is). After apply, register the printed public key as a GitHub
-# deploy key (read-only is enough for pull; ArgoCD Image Updater write-back needs
-# write) on the basebandit/zeus repo.
+# ArgoCD bootstrap secrets, generated and stored in SecretsManager (read by the
+# argocd root). After apply, register the output public key as a GitHub deploy
+# key (write — Image Updater pushes tag bumps). SSH key is in state; keep backend encrypted.
 
 resource "random_password" "argocd_admin" {
   length  = 24
@@ -21,7 +16,6 @@ resource "tls_private_key" "zeus_repo" {
   algorithm = "ED25519"
 }
 
-# Stable mtime: only changes when the admin password changes.
 resource "time_static" "admin_password_mtime" {
   triggers = {
     password = random_password.argocd_admin.result

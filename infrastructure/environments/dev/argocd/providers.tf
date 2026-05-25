@@ -21,9 +21,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-# The cluster already exists when this root runs, so these data sources resolve
-# at plan time — no two-phase apply, unlike configuring providers from a
-# cluster resource in the same root.
+# Cluster already exists when this root runs, so these resolve at plan time (no two-phase).
 data "aws_eks_cluster" "this" {
   name = data.terraform_remote_state.cluster.outputs.cluster_name
 }

@@ -40,14 +40,6 @@ variable "private_subnet_cidrs" {
 
 variable "interface_endpoint_services" {
   type        = list(string)
-  description = <<-EOT
-    Short service names for AWS PrivateLink interface endpoints, enough for
-    private EKS nodes to function without a NAT gateway:
-      ecr.api, ecr.dkr  -> pull images
-      ec2               -> VPC CNI manages ENIs
-      sts               -> AssumeRole / Pod Identity
-      eks-auth          -> EKS Pod Identity token
-    S3 is added separately as a (free) gateway endpoint for ECR layer storage.
-  EOT
+  description = "Interface endpoint services letting private nodes work without a NAT (image pulls, CNI, Pod Identity). S3 is a separate gateway endpoint."
   default     = ["ecr.api", "ecr.dkr", "ec2", "sts", "eks-auth"]
 }

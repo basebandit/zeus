@@ -14,8 +14,7 @@ spec:
     chart: argocd-image-updater
     targetRevision: 0.12.3
     helm:
-      # Images replicate from shared into this account, so the registry is
-      # same-account; the argocd-image-updater Pod Identity role grants ECR read.
+      # Same-account registry (images replicate here); Pod Identity grants ECR read.
       values: |
         serviceAccount:
           name: argocd-image-updater
