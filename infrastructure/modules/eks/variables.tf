@@ -27,8 +27,17 @@ variable "endpoint_public_access" {
 
 variable "endpoint_private_access" {
   type        = bool
-  description = "Expose the Kubernetes API endpoint inside the VPC."
-  default     = false
+  description = "Expose the Kubernetes API endpoint inside the VPC. Required true for private nodes to reach the control plane."
+  default     = true
+}
+
+variable "public_access_cidrs" {
+  type        = list(string)
+  description = "CIDRs allowed to reach the public API endpoint (e.g. your home/office /32). No default — must be set explicitly; do not use 0.0.0.0/0."
+  validation {
+    condition     = !contains(var.public_access_cidrs, "0.0.0.0/0")
+    error_message = "Refusing 0.0.0.0/0 on the EKS public endpoint. Provide specific CIDRs."
+  }
 }
 
 variable "node_instance_types" {

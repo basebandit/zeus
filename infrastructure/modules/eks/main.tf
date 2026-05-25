@@ -19,6 +19,23 @@ resource "aws_iam_role_policy_attachment" "cluster" {
   role       = aws_iam_role.cluster.name
 }
 
+# Envelope-encrypt Kubernetes secrets with a customer-managed KMS key.
+resource "aws_kms_key" "eks" {
+  description             = "EKS secret envelope encryption for ${var.cluster_name}"
+  enable_key_rotation     = true
+  deletion_window_in_days = 7
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.cluster_name}-eks-secrets"
+  target_key_id = aws_kms_key.eks.key_id
+}
+
+# Public endpoint is intentional but locked to var.public_access_cidrs (never
+# 0.0.0.0/0 — enforced by variable validation), so operators can reach the API
+# while it stays closed to the internet. Private access is on so nodes reach the
+# control plane without a NAT.
+#trivy:ignore:AWS-0040
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   version  = var.cluster_version
@@ -27,7 +44,15 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     endpoint_private_access = var.endpoint_private_access
     endpoint_public_access  = var.endpoint_public_access
+    public_access_cidrs     = var.public_access_cidrs
     subnet_ids              = var.subnet_ids
+  }
+
+  encryption_config {
+    provider {
+      key_arn = aws_kms_key.eks.arn
+    }
+    resources = ["secrets"]
   }
 
   access_config {
