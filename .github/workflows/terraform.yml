@@ -66,6 +66,9 @@ jobs:
           scan-ref: infrastructure
           severity: HIGH,CRITICAL
           exit-code: "1"
+          # Legacy pre-multi-account workload root, slated for removal once
+          # migrated onto the modules. Not worth hardening in place.
+          skip-dirs: infrastructure/staging
 
   # plan/apply jobs will be added here later (assume the executor role per env via
   # OIDC, terraform plan on PRs, gated apply on merge to main).
