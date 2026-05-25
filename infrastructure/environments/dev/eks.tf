@@ -8,4 +8,6 @@ module "eks" {
 
   node_instance_types = var.node_instance_types
   node_scaling        = var.node_scaling
+
+  public_access_cidrs = var.cluster_public_access_cidrs
 }

@@ -17,6 +17,11 @@ variable "argocd_repo_url" {
 }
 
 # --- Workload: EKS ----------------------------------------------------------
+variable "cluster_public_access_cidrs" {
+  description = "CIDRs allowed to reach the EKS public API endpoint (e.g. your home/office IP /32). Set in terraform.tfvars; must not be 0.0.0.0/0."
+  type        = list(string)
+}
+
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster."
   type        = string
