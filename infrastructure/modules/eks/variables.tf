@@ -71,3 +71,21 @@ variable "pod_identity_addon_version" {
   description = "Version of the eks-pod-identity-agent addon."
   default     = "v1.3.8-eksbuild.2"
 }
+
+variable "access_entries" {
+  description = <<-EOT
+    EKS access entries keyed by a stable name. Each maps an IAM principal (e.g. an
+    Identity Center permission-set role) to an EKS-managed access policy, optionally
+    scoped to namespaces. Add a team by adding an entry; add a person by assigning
+    them the permission set in Identity Center (no change here).
+  EOT
+  type = map(object({
+    principal_arn = string
+    policy_arn    = string
+    access_scope = optional(object({
+      type       = string
+      namespaces = optional(list(string))
+    }), { type = "cluster" })
+  }))
+  default = {}
+}

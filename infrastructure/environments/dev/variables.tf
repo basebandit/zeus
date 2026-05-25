@@ -22,6 +22,23 @@ variable "cluster_public_access_cidrs" {
   type        = list(string)
 }
 
+variable "cluster_admin_role_arn" {
+  description = "IAM principal (Identity Center admin permission-set role) granted EKS cluster-admin. Set in terraform.tfvars."
+  type        = string
+}
+
+variable "developer_role_arn" {
+  description = "IAM principal (Identity Center developer permission-set role) granted namespace-scoped read-only. Null until the team grows."
+  type        = string
+  default     = null
+}
+
+variable "app_namespaces" {
+  description = "Namespaces developers get read-only (view) access to."
+  type        = list(string)
+  default     = ["orders", "payments"]
+}
+
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster."
   type        = string
