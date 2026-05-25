@@ -23,7 +23,7 @@ terraform {
 
 # Cluster root: AWS only. No in-cluster providers here, so the cluster can be
 # planned and applied in a single pass. ArgoCD is installed by the separate
-# bootstrap root (environments/dev/bootstrap), which runs after this.
+# argocd root (environments/dev/argocd), which runs after this.
 provider "aws" {
   region = var.aws_region
 }

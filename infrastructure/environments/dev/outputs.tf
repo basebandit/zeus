@@ -1,8 +1,3 @@
-output "executor_role_arn" {
-  description = "ARN of the Terraform executor role. Provide this to the shared-services bootstrap role as an executor_role_arn."
-  value       = module.terraform_executor.role_arn
-}
-
 output "vpc_id" {
   description = "ID of the dev VPC."
   value       = module.vpc.vpc_id

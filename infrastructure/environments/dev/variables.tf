@@ -9,11 +9,6 @@ variable "dev_account_id" {
   type        = string
 }
 
-variable "bootstrap_role_arn" {
-  description = "ARN of the GHA bootstrap role in the Shared Services account. Get this from: cd shared-services && terraform output bootstrap_role_arn"
-  type        = string
-}
-
 # --- ArgoCD -----------------------------------------------------------------
 variable "argocd_repo_url" {
   description = "Git URL ArgoCD pulls manifests from."
