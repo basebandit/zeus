@@ -15,60 +15,39 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    name: fmt / validate / tflint
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~> 1.10"
-
-      - name: Format check
-        run: terraform fmt -check -recursive infrastructure
-
-      # Validate every root and module independently. -backend=false skips remote
-      # state, so no AWS credentials are needed for validation.
-      - name: Validate all dirs
-        run: |
-          set -euo pipefail
-          fail=0
-          dirs=$(find infrastructure -type f -name '*.tf' \
-            -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
-          for d in $dirs; do
-            echo "::group::validate $d"
-            terraform -chdir="$d" init -backend=false -input=false >/dev/null
-            terraform -chdir="$d" validate -no-color || fail=1
-            echo "::endgroup::"
-          done
-          exit $fail
-
+      - run: terraform fmt -check -recursive infrastructure
       - uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: latest
+      - run: tflint --init
+      - run: tflint --recursive --chdir=infrastructure
 
-      - name: TFLint
-        run: |
-          tflint --init
-          tflint --recursive --chdir=infrastructure
-
-  security:
-    name: Trivy IaC scan
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.10"
+      - name: Validate roots and modules
+        run: |
+          for dir in $(find infrastructure -name '*.tf' -not -path '*/.terraform/*' -printf '%h\n' | sort -u); do
+            terraform -chdir="$dir" init -backend=false -input=false >/dev/null
+            terraform -chdir="$dir" validate
+          done
 
-      - name: Trivy config scan
-        uses: aquasecurity/trivy-action@master
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: config
           scan-ref: infrastructure
           severity: HIGH,CRITICAL
           exit-code: "1"
-          # Legacy pre-multi-account workload root, slated for removal once
-          # migrated onto the modules. Not worth hardening in place.
-          skip-dirs: infrastructure/staging
-
-  # plan/apply jobs will be added here later (assume the executor role per env via
-  # OIDC, terraform plan on PRs, gated apply on merge to main).
