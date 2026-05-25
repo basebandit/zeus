@@ -71,20 +71,3 @@ variable "shared_account_id" {
   type        = string
 }
 
-variable "ecr_account_id" {
-  description = "AWS account ID that owns the ECR repositories ArgoCD Image Updater watches. Defaults to the shared account."
-  type        = string
-  default     = null
-}
-
-variable "ecr_region" {
-  description = "Region of the ECR repositories."
-  type        = string
-  default     = "eu-central-1"
-}
-
-variable "ecr_pull_role_arn" {
-  description = "Cross-account role in the ECR-owning account that the image-updater assumes for ECR read/auth. Null for same-account ECR."
-  type        = string
-  default     = null
-}

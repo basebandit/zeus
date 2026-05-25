@@ -1,8 +1,3 @@
-variable "env" {
-  type        = string
-  description = "Environment name (dev, staging, prod)."
-}
-
 variable "cluster_name" {
   type        = string
   description = "Fully-qualified EKS cluster name (e.g. dev-basebandit-lab-cluster). Used directly as the cluster name and as the prefix for its IAM roles."

@@ -3,9 +3,7 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  region   = var.aws_region
-  env      = "dev"
-  org_name = "basebandit"
+  env = "dev"
 
   cluster_name      = "basebandit-lab"
   cluster_full_name = "${local.env}-${local.cluster_name}-cluster"
