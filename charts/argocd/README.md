@@ -2,6 +2,18 @@
 
 How dev gets from "empty cluster" to "everything running", and where to add things.
 
+## Layout
+
+```
+charts/argocd/
+  install/<env>/         # what Terraform installs
+    argocd-values.yaml   # argo-cd Helm values
+    appsets.yaml         # argocd-apps values: projects + platform-root + apps ApplicationSet
+  platform/              # opensource/third-party tools (real Application manifests)
+    cluster-secret-store/  # local Helm chart (ClusterSecretStore)
+  apps/                  # first-party app params, consumed by the apps ApplicationSet
+```
+
 ## The chain
 
 ```
