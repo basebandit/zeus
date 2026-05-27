@@ -1,0 +1,38 @@
+server:
+  port: ${PORT:8084}
+
+spring:
+  application:
+    name: auth
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:auth}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  rabbitmq:
+    addresses: ${RABBITMQ_URL:amqp://guest:guest@localhost:5672/}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-insecure-jwt-secret-change-me-in-prod-0123456789}
+    access-ttl-seconds: ${JWT_ACCESS_TTL:900}        # 15 minutes
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL:1209600}  # 14 days
+    issuer: zeus-auth
+  rabbitmq:
+    exchange: ${RABBITMQ_EXCHANGE:basebandit.events}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
