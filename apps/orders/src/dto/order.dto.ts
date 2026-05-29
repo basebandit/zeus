@@ -75,6 +75,17 @@ export class RemoveFromCartDto {
   itemId: string;
 }
 
+export class UpdateCartItemDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'User UUID' })
+  @IsUUID()
+  userId: string;
+
+  @ApiProperty({ example: 3, description: 'New quantity for the cart line', minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+}
+
 export class OrderResponseDto {
   id: string;
   userId: string;

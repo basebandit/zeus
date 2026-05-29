@@ -11,7 +11,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { OrderService } from '../services/order.service';
-import { CreateOrderDto, AddToCartDto, OrderResponseDto } from '../dto/order.dto';
+import {
+  CreateOrderDto,
+  AddToCartDto,
+  OrderResponseDto,
+  UpdateCartItemDto,
+} from '../dto/order.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('orders')
@@ -76,6 +81,14 @@ export class CartController {
   @ApiResponse({ status: 201, description: 'Item added to cart' })
   async addToCart(@Body() dto: AddToCartDto) {
     return this.orderService.addToCart(dto);
+  }
+
+  @Put('items/:itemId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Set the quantity of a cart line' })
+  @ApiResponse({ status: 200, description: 'Cart line quantity updated' })
+  async updateCartItem(@Param('itemId') itemId: string, @Body() dto: UpdateCartItemDto) {
+    return this.orderService.updateCartItemQuantity(dto.userId, itemId, dto.quantity);
   }
 
   @Delete('items/:itemId')
