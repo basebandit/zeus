@@ -52,6 +52,8 @@ export class EventService {
       orderId: order.id,
       userId: order.userId,
       paymentId: order.paymentId,
+      // Forwarded so the shipping service can create a shipment for this address.
+      shippingAddress: order.shippingAddress,
       timestamp: new Date().toISOString(),
     };
 
@@ -80,6 +82,17 @@ export class EventService {
     };
 
     await this.publish('order.shipped', event);
+  }
+
+  async publishOrderDelivered(order: Order): Promise<void> {
+    const event = {
+      eventType: 'order.delivered',
+      orderId: order.id,
+      userId: order.userId,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.publish('order.delivered', event);
   }
 
   private async publish(routingKey: string, message: any): Promise<void> {
@@ -162,6 +175,75 @@ export class EventService {
                 },
               });
               channel.ack(msg); // Acknowledge original message
+            }
+          }
+        },
+        { noAck: false },
+      );
+    });
+  }
+
+  async consumeShipmentEvents(
+    onShipmentShipped: (msg: any) => Promise<void>,
+    onShipmentDelivered: (msg: any) => Promise<void>,
+  ): Promise<void> {
+    await this.channelWrapper.addSetup(async (channel: ConfirmChannel) => {
+      const queue = 'orders.shipment_events';
+      const dlq = 'orders.shipment_events.dlq';
+
+      // Create dead letter queue
+      await channel.assertQueue(dlq, { durable: true });
+
+      // Create main queue with DLQ configuration
+      await channel.assertQueue(queue, {
+        durable: true,
+        arguments: {
+          'x-dead-letter-exchange': '',
+          'x-dead-letter-routing-key': dlq,
+          'x-message-ttl': 60000,
+        },
+      });
+
+      await channel.bindQueue(queue, this.exchange, 'shipment.shipped');
+      await channel.bindQueue(queue, this.exchange, 'shipment.delivered');
+
+      this.logger.log('Consuming shipment events...');
+
+      await channel.consume(
+        queue,
+        async (msg) => {
+          if (!msg) return;
+
+          try {
+            const event = JSON.parse(msg.content.toString());
+            const eventType = event.eventType;
+
+            if (eventType === 'shipment.shipped') {
+              await onShipmentShipped(msg);
+            } else if (eventType === 'shipment.delivered') {
+              await onShipmentDelivered(msg);
+            }
+
+            channel.ack(msg);
+          } catch (error) {
+            this.logger.error('Error processing shipment event:', error);
+
+            const headers = msg.properties.headers || {};
+            const retryCount = (headers['x-retry-count'] || 0) + 1;
+            const maxRetries = 3;
+
+            if (retryCount >= maxRetries) {
+              this.logger.error(`Max retries reached for message, sending to DLQ`);
+              channel.nack(msg, false, false);
+            } else {
+              channel.publish('', queue, msg.content, {
+                ...msg.properties,
+                headers: {
+                  ...headers,
+                  'x-retry-count': retryCount,
+                },
+              });
+              channel.ack(msg);
             }
           }
         },
