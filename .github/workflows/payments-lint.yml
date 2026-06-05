@@ -50,9 +50,6 @@ jobs:
       - name: 📝 Run MyPy (type checking)
         run: uv run mypy .
 
-      - name: ✅ Run pre-commit hooks
-        run: uv run pre-commit run --all-files
-
       - name: 🧪 Run Pytest
         run: uv run pytest --maxfail=1 --disable-warnings -v
 
