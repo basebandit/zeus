@@ -1,4 +1,4 @@
-import { IsUUID, IsNumber, IsString, IsEnum, IsObject, ValidateNested, Min } from 'class-validator';
+import { IsUUID, IsNumber, IsString, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderStatus } from '../entities/order.entity';

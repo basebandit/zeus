@@ -4,7 +4,6 @@ import { Order, OrderStatus } from '../entities/order.entity';
 
 describe('RedisService', () => {
   let service: RedisService;
-  let mockRedis: any;
 
   const mockOrder: Order = {
     id: 'order-123',
@@ -26,12 +25,6 @@ describe('RedisService', () => {
   };
 
   beforeEach(async () => {
-    mockRedis = {
-      get: jest.fn(),
-      setex: jest.fn(),
-      del: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {

@@ -7,12 +7,7 @@ import { OrderModule } from '../modules/order.module';
 
 @Module({
   imports: [OrderModule],
-  providers: [
-    EventService,
-    PaymentEventHandler,
-    InventoryEventHandler,
-    ShipmentEventHandler,
-  ],
+  providers: [EventService, PaymentEventHandler, InventoryEventHandler, ShipmentEventHandler],
   exports: [EventService],
 })
 export class EventModule implements OnModuleInit {

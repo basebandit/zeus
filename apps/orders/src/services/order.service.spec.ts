@@ -10,7 +10,6 @@ import { AddToCartDto, CreateOrderDto } from '../dto/order.dto';
 describe('OrderService', () => {
   let service: OrderService;
   let orderRepository: jest.Mocked<Repository<Order>>;
-  let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
   let orderEventRepository: jest.Mocked<Repository<OrderEvent>>;
   let eventService: jest.Mocked<EventService>;
   let redisService: jest.Mocked<RedisService>;
@@ -82,7 +81,6 @@ describe('OrderService', () => {
 
     service = module.get<OrderService>(OrderService);
     orderRepository = module.get(getRepositoryToken(Order));
-    orderItemRepository = module.get(getRepositoryToken(OrderItem));
     orderEventRepository = module.get(getRepositoryToken(OrderEvent));
     eventService = module.get(EventService);
     redisService = module.get(RedisService);
@@ -301,9 +299,9 @@ describe('OrderService', () => {
     it('should throw error if order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.handlePaymentCompleted('order-123', 'payment-123'),
-      ).rejects.toThrow('Order not found');
+      await expect(service.handlePaymentCompleted('order-123', 'payment-123')).rejects.toThrow(
+        'Order not found',
+      );
     });
   });
 
@@ -358,9 +356,7 @@ describe('OrderService', () => {
     it('should throw error if order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.cancelOrder('order-123')).rejects.toThrow(
-        'Order not found',
-      );
+      await expect(service.cancelOrder('order-123')).rejects.toThrow('Order not found');
     });
 
     it('should throw error if order is shipped', async () => {

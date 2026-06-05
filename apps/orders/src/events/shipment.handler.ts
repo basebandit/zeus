@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OrderService } from '../services/order.service';
-import {
-  ShipmentShippedEvent,
-  ShipmentDeliveredEvent,
-} from './dto/shipment-events.dto';
+import { ShipmentShippedEvent, ShipmentDeliveredEvent } from './dto/shipment-events.dto';
 
 @Injectable()
 export class ShipmentEventHandler {
@@ -17,17 +14,11 @@ export class ShipmentEventHandler {
 
       this.logger.log(`Processing shipment.shipped event for order ${event.orderId}`);
 
-      await this.orderService.handleShipmentShipped(
-        event.orderId,
-        event.trackingNumber,
-      );
+      await this.orderService.handleShipmentShipped(event.orderId, event.trackingNumber);
 
       this.logger.log(`Successfully processed shipment.shipped for order ${event.orderId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to process shipment.shipped event: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to process shipment.shipped event: ${error.message}`, error.stack);
       throw error; // Re-throw to trigger retry mechanism
     }
   }

@@ -2,10 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { ShipmentEventHandler } from './shipment.handler';
 import { OrderService } from '../services/order.service';
-import {
-  ShipmentShippedEvent,
-  ShipmentDeliveredEvent,
-} from './dto/shipment-events.dto';
+import { ShipmentShippedEvent, ShipmentDeliveredEvent } from './dto/shipment-events.dto';
 
 describe('ShipmentEventHandler', () => {
   let handler: ShipmentEventHandler;
@@ -79,9 +76,7 @@ describe('ShipmentEventHandler', () => {
       const message = { content: Buffer.from(JSON.stringify(event)) };
       orderService.handleShipmentShipped.mockRejectedValue(new Error('Order not found'));
 
-      await expect(handler.handleShipmentShipped(message)).rejects.toThrow(
-        'Order not found',
-      );
+      await expect(handler.handleShipmentShipped(message)).rejects.toThrow('Order not found');
     });
   });
 

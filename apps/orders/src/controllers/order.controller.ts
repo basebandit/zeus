@@ -11,12 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { OrderService } from '../services/order.service';
-import {
-  CreateOrderDto,
-  AddToCartDto,
-  OrderResponseDto,
-  UpdateCartItemDto,
-} from '../dto/order.dto';
+import { CreateOrderDto, AddToCartDto, UpdateCartItemDto } from '../dto/order.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('orders')

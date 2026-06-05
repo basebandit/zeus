@@ -89,11 +89,7 @@ export class OrderService {
     return savedCart;
   }
 
-  async updateCartItemQuantity(
-    userId: string,
-    itemId: string,
-    quantity: number,
-  ): Promise<Order> {
+  async updateCartItemQuantity(userId: string, itemId: string, quantity: number): Promise<Order> {
     const cart = await this.orderRepository.findOne({
       where: { userId, status: OrderStatus.CART },
       relations: ['items'],
