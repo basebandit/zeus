@@ -34,6 +34,12 @@ describe('OrderService', () => {
   };
 
   beforeEach(async () => {
+    // getProductPrice() fetches the authoritative unit price from the inventory service.
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ price: 29.99 }),
+    }) as unknown as typeof fetch;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrderService,
@@ -392,7 +398,8 @@ describe('OrderService', () => {
         totalAmount: 59.98,
       };
 
-      redisService.getCart.mockResolvedValue(cart as Order);
+      // removeFromCart loads the cart from the DB (not the cache) to get a managed entity.
+      orderRepository.findOne.mockResolvedValue(cart as Order);
       orderRepository.save.mockResolvedValue({
         ...cart,
         items: [],
