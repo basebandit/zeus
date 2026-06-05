@@ -21,7 +21,16 @@ orders.payment_events
 orders.inventory_events
 ├── Routing keys: inventory.reserved, inventory.reservation_failed
 └── DLQ: orders.inventory_events.dlq
+
+orders.shipment_events
+├── Routing keys: shipment.shipped, shipment.delivered
+└── DLQ: orders.shipment_events.dlq
 ```
+
+> The saga now spans five services. **Auth** issues the JWT (enforced at the gateway),
+> **Shipping** fulfills confirmed orders, and **Notifications** emails the customer on key
+> transitions. Orders remains the sole owner of order *status*: it consumes `shipment.shipped` /
+> `shipment.delivered` and re-emits `order.shipped` / `order.delivered` for downstream consumers.
 
 ## Saga Flow
 
@@ -92,6 +101,32 @@ sequenceDiagram
     Inventory->>Inventory: Release reserved inventory
 ```
 
+### Fulfillment Path: Shipping & Delivery
+
+```mermaid
+sequenceDiagram
+    participant Orders
+    participant Shipping
+    participant Notifications
+
+    Orders->>RabbitMQ: Publish order.confirmed (with shippingAddress)
+    RabbitMQ->>Shipping: Consume order.confirmed
+    RabbitMQ->>Notifications: Consume order.confirmed (email)
+    Shipping->>Shipping: Create shipment, pack & dispatch
+    Shipping->>RabbitMQ: Publish shipment.created
+    Shipping->>RabbitMQ: Publish shipment.shipped (trackingNumber)
+    RabbitMQ->>Orders: Consume shipment.shipped
+    Orders->>Orders: Update order (status: SHIPPED)
+    Orders->>RabbitMQ: Publish order.shipped
+    RabbitMQ->>Notifications: Consume order.shipped (email)
+    Note over Shipping: On delivery (POST /shipments/:id/deliver)
+    Shipping->>RabbitMQ: Publish shipment.delivered
+    RabbitMQ->>Orders: Consume shipment.delivered
+    Orders->>Orders: Update order (status: DELIVERED)
+    Orders->>RabbitMQ: Publish order.delivered
+    RabbitMQ->>Notifications: Consume order.delivered (email)
+```
+
 ## Event Types
 
 ### Published by Orders Service
@@ -121,7 +156,35 @@ sequenceDiagram
   "orderId": "uuid",
   "userId": "uuid",
   "paymentId": "uuid",
+  "shippingAddress": {
+    "street": "123 Main St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94105",
+    "country": "US"
+  },
   "timestamp": "2026-01-14T12:00:30Z"
+}
+```
+
+#### order.shipped
+```json
+{
+  "eventType": "order.shipped",
+  "orderId": "uuid",
+  "userId": "uuid",
+  "trackingNumber": "ZX0123456789AB",
+  "timestamp": "2026-01-14T12:05:00Z"
+}
+```
+
+#### order.delivered
+```json
+{
+  "eventType": "order.delivered",
+  "orderId": "uuid",
+  "userId": "uuid",
+  "timestamp": "2026-01-15T09:00:00Z"
 }
 ```
 
@@ -199,6 +262,30 @@ sequenceDiagram
 }
 ```
 
+#### shipment.shipped
+```json
+{
+  "eventType": "shipment.shipped",
+  "shipmentId": "uuid",
+  "orderId": "uuid",
+  "userId": "uuid",
+  "trackingNumber": "ZX0123456789AB",
+  "carrier": "ZeusExpress",
+  "timestamp": "2026-01-14T12:05:00Z"
+}
+```
+
+#### shipment.delivered
+```json
+{
+  "eventType": "shipment.delivered",
+  "shipmentId": "uuid",
+  "orderId": "uuid",
+  "userId": "uuid",
+  "timestamp": "2026-01-15T09:00:00Z"
+}
+```
+
 ## Error Handling
 
 ### Retry Strategy
@@ -230,9 +317,11 @@ src/
 ├── events/
 │   ├── dto/
 │   │   ├── payment-events.dto.ts      # Payment event interfaces
-│   │   └── inventory-events.dto.ts    # Inventory event interfaces
+│   │   ├── inventory-events.dto.ts    # Inventory event interfaces
+│   │   └── shipment-events.dto.ts     # Shipment event interfaces
 │   ├── payment.handler.ts             # Payment event handlers
 │   ├── inventory.handler.ts           # Inventory event handlers
+│   ├── shipment.handler.ts            # Shipment event handlers
 │   └── event.module.ts                # Wires up consumers on startup
 ├── services/
 │   ├── event.service.ts               # RabbitMQ publish/consume logic
@@ -303,10 +392,21 @@ curl http://localhost:8080/api/v1/orders/{ORDER_ID}
 # status should be "confirmed" after payment.completed event
 ```
 
-## Next Steps
+## Status & Next Steps
 
-1. **Build Inventory Service (Go)**: Will consume `order.created` and publish `inventory.reserved`/`inventory.reservation_failed`
-2. **Enhance Payment Service (Python)**: Will consume `inventory.reserved` and publish `payment.completed`/`payment.failed`
-3. **Add Notifications Service (Java)**: Will consume `order.confirmed` to send confirmation emails
-4. **Implement compensating transactions**: Refund logic, inventory release on cancellation
-5. **Add observability**: Distributed tracing with Jaeger to visualize Saga flows
+Implemented:
+- ✅ **Inventory Service (Go)** — consumes `order.created`, publishes `inventory.reserved`/`inventory.reservation_failed`
+- ✅ **Payment Service (Python)** — consumes `inventory.reserved`, publishes `payment.completed`/`payment.failed`
+- ✅ **Shipping Service (Python)** — consumes `order.confirmed`/`order.cancelled`, publishes `shipment.created`/`shipment.shipped`/`shipment.delivered`
+- ✅ **Notifications Service (Java)** — consumes order/payment events + `user.registered`, sends email
+- ✅ **Auth Service (Java)** + **API Gateway (Go)** — JWT issued by auth, validated at the gateway
+
+Future:
+1. **Migrate orchestration to Temporal** — the current saga is **event-choreographed** across
+   services (each reacts to events). The intended evolution is to model the order saga as a Temporal
+   workflow in the Orders service: deterministic orchestration, built-in retries/timeouts, and
+   first-class compensation, replacing the hand-rolled DLQ/retry choreography. The event contracts
+   above stay the same; Temporal becomes the coordinator.
+2. **Compensating transactions**: payment refunds, and publish `inventory.released` on cancellation
+   (inventory currently releases internally on `order.cancelled`).
+3. **Observability**: distributed tracing (e.g. Jaeger/OpenTelemetry) to visualize saga flows.
