@@ -1,0 +1,66 @@
+variable "aws_region" {
+  description = "AWS region."
+  type        = string
+  default     = "eu-central-1"
+}
+
+variable "dev_account_id" {
+  description = "AWS account ID of the dev member account. Get this from: cd management && terraform output dev_account_id"
+  type        = string
+}
+
+variable "bootstrap_role_arn" {
+  description = "ARN of the GHA bootstrap role in the Shared Services account. Get this from: cd shared-services && terraform output bootstrap_role_arn"
+  type        = string
+}
+
+# --- Workload: EKS ----------------------------------------------------------
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS cluster."
+  type        = string
+  default     = "1.32"
+}
+
+variable "node_instance_types" {
+  description = "EC2 instance types for the general node group."
+  type        = list(string)
+  default     = ["t3.small"]
+}
+
+variable "node_scaling" {
+  description = "Autoscaling bounds for the general node group (dev is kept small)."
+  type = object({
+    min     = number
+    desired = number
+    max     = number
+  })
+  default = {
+    min     = 2
+    desired = 2
+    max     = 4
+  }
+}
+
+# --- Workload: cross-account ECR (registry lives in the shared account) ------
+variable "shared_account_id" {
+  description = "AWS account ID of the shared account (Terraform state + ECR). Get from: cd management && terraform output shared_services_account_id"
+  type        = string
+}
+
+variable "ecr_account_id" {
+  description = "AWS account ID that owns the ECR repositories ArgoCD Image Updater watches. Defaults to the shared account."
+  type        = string
+  default     = null
+}
+
+variable "ecr_region" {
+  description = "Region of the ECR repositories."
+  type        = string
+  default     = "eu-central-1"
+}
+
+variable "ecr_pull_role_arn" {
+  description = "Cross-account role in the ECR-owning account that the image-updater assumes for ECR read/auth. Null for same-account ECR."
+  type        = string
+  default     = null
+}

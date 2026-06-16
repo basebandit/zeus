@@ -50,6 +50,13 @@ coverage/
 .env.local
 .env.*.local
 
+# Secrets — never commit. ArgoCD repo creds come from SecretsManager via External Secrets.
+git-repo-secret.yaml
+*.pem
+*-key.pem
+id_rsa
+id_ed25519
+
 # IDEs
 .vscode/
 .idea/
