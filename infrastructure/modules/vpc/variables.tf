@@ -3,17 +3,22 @@ variable "env" {
   description = "Environment name (dev, staging, prod). Used to name and tag resources."
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region (used to build VPC endpoint service names)."
+}
+
 variable "cluster_full_name" {
   type        = string
-  description = "Fully-qualified EKS cluster name (e.g. dev-basebandit-lab-cluster). Used for the kubernetes.io/cluster subnet tag so the AWS Load Balancer Controller and EKS can discover subnets."
+  description = "Fully-qualified EKS cluster name (e.g. dev-basebandit-lab-cluster). Used for the kubernetes.io/cluster subnet tag."
 }
 
 variable "azs" {
   type        = list(string)
-  description = "Two availability zones to spread subnets across."
+  description = "Two availability zones to spread the private subnets across."
   validation {
     condition     = length(var.azs) == 2
-    error_message = "Exactly two availability zones are required (zone1, zone2)."
+    error_message = "Exactly two availability zones are required."
   }
 }
 
@@ -33,18 +38,8 @@ variable "private_subnet_cidrs" {
   }
 }
 
-variable "public_subnet_cidrs" {
+variable "interface_endpoint_services" {
   type        = list(string)
-  description = "Two CIDR blocks for the public (load balancer) subnets, one per AZ."
-  default     = ["10.0.64.0/19", "10.0.96.0/19"]
-  validation {
-    condition     = length(var.public_subnet_cidrs) == 2
-    error_message = "Exactly two public subnet CIDRs are required."
-  }
-}
-
-variable "single_nat_gateway" {
-  type        = bool
-  description = "When true, route both private subnets through one NAT gateway (cheaper, fine for non-prod). When false, one NAT gateway per AZ for HA."
-  default     = true
+  description = "Interface endpoint services letting private nodes work without a NAT (image pulls, CNI, Pod Identity). S3 is a separate gateway endpoint."
+  default     = ["ecr.api", "ecr.dkr", "ec2", "sts", "eks-auth"]
 }

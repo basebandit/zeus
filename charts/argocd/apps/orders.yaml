@@ -1,0 +1,4 @@
+# Params for the dev-apps ApplicationSet (env-agnostic; appset adds repo, registry, values-<env>.yaml).
+name: orders
+namespace: orders
+path: charts/orders

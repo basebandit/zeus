@@ -6,50 +6,22 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.49"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 3.0.2"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.30"
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
     }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14"
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
     }
   }
 }
 
+# AWS-only — single-pass apply. ArgoCD is installed by environments/dev/argocd.
 provider "aws" {
   region = var.aws_region
-}
-
-# In-cluster providers are configured from the EKS module outputs. These values
-# are unknown until the cluster exists, so the first run needs a two-phase apply:
-#   terraform apply -target=module.eks
-#   terraform apply
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-    token                  = data.aws_eks_cluster_auth.this.token
-  }
-}
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
-provider "kubectl" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-  token                  = data.aws_eks_cluster_auth.this.token
-  load_config_file       = false
 }

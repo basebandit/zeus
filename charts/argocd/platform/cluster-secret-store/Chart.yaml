@@ -1,0 +1,5 @@
+apiVersion: v2
+name: argocd-config-dev
+description: Cluster-scoped ArgoCD config (External Secrets ClusterSecretStore) for dev
+type: application
+version: 0.1.0

@@ -12,6 +12,23 @@ repos:
         files: ^apps/
       - id: check-toml
         files: ^apps/
+      # ArgoCD manifests (plain YAML). Helm chart templates are excluded — their
+      # Go-template syntax isn't valid YAML; `helm lint` covers those in CI.
+      - id: check-yaml
+        name: check-yaml (argocd manifests)
+        files: ^charts/argocd/(apps|platform|install)/.*\.ya?ml$
+        exclude: /templates/
+        args: ["--allow-multiple-documents"]
+
+  # Infrastructure: format + lint Terraform locally (fast). Heavier checks
+  # (validate, trivy, helm lint) run in CI — see .github/workflows/infra-validate.yml.
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_tflint
+        args:
+          - "--args=--recursive"
 
   # App-specific hooks for payments
   - repo: https://github.com/astral-sh/ruff-pre-commit
