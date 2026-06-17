@@ -8,6 +8,8 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Private-only: no public subnets, IGW or NAT. Node egress is via the VPC
+# endpoints below.
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -21,90 +23,63 @@ resource "aws_subnet" "private" {
   }
 }
 
-resource "aws_subnet" "public" {
-  count                   = 2
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = true
-
-  tags = {
-    "Name"                                           = "${var.env}-public-${var.azs[count.index]}"
-    "kubernetes.io/role/elb"                         = "1"
-    "kubernetes.io/cluster/${var.cluster_full_name}" = "owned"
-  }
-}
-
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "${var.env}-igw"
-  }
-}
-
-locals {
-  nat_count = var.single_nat_gateway ? 1 : 2
-}
-
-resource "aws_eip" "nat" {
-  count  = local.nat_count
-  domain = "vpc"
-
-  tags = {
-    Name = "${var.env}-nat-${count.index}"
-  }
-}
-
-resource "aws_nat_gateway" "nat" {
-  count         = local.nat_count
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  tags = {
-    Name = "${var.env}-nat-${count.index}"
-  }
-
-  depends_on = [aws_internet_gateway.igw]
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = {
-    Name = "${var.env}-public"
-  }
-}
-
-# One private route table per NAT gateway. With single_nat_gateway both private
-# subnets share one table; otherwise each AZ routes through its own NAT.
 resource "aws_route_table" "private" {
-  count  = local.nat_count
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat[count.index].id
-  }
-
   tags = {
-    Name = "${var.env}-private-${count.index}"
+    Name = "${var.env}-private"
   }
-}
-
-resource "aws_route_table_association" "public" {
-  count          = 2
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
   count          = 2
   subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[var.single_nat_gateway ? 0 : count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
+# S3 gateway endpoint (free) — ECR layer storage.
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+
+  tags = {
+    Name = "${var.env}-s3"
+  }
+}
+
+resource "aws_security_group" "endpoints" {
+  name        = "${var.env}-vpc-endpoints"
+  description = "Allow HTTPS from the VPC to interface endpoints"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "HTTPS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  # No egress: endpoints only respond to ingress.
+
+  tags = {
+    Name = "${var.env}-vpc-endpoints"
+  }
+}
+
+resource "aws_vpc_endpoint" "interface" {
+  for_each = toset(var.interface_endpoint_services)
+
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.region}.${each.value}"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${var.env}-${each.value}"
+  }
 }

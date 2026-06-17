@@ -1,6 +1,3 @@
-# ---------------------------------------------------------------------------
-# Control plane
-# ---------------------------------------------------------------------------
 resource "aws_iam_role" "cluster" {
   name = "${var.cluster_name}-eks-cluster"
 
@@ -19,6 +16,19 @@ resource "aws_iam_role_policy_attachment" "cluster" {
   role       = aws_iam_role.cluster.name
 }
 
+resource "aws_kms_key" "eks" {
+  description             = "EKS secret envelope encryption for ${var.cluster_name}"
+  enable_key_rotation     = true
+  deletion_window_in_days = 7
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.cluster_name}-eks-secrets"
+  target_key_id = aws_kms_key.eks.key_id
+}
+
+# Public endpoint is CIDR-restricted (var.public_access_cidrs rejects 0.0.0.0/0).
+#trivy:ignore:AWS-0040
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   version  = var.cluster_version
@@ -27,7 +37,15 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     endpoint_private_access = var.endpoint_private_access
     endpoint_public_access  = var.endpoint_public_access
+    public_access_cidrs     = var.public_access_cidrs
     subnet_ids              = var.subnet_ids
+  }
+
+  encryption_config {
+    provider {
+      key_arn = aws_kms_key.eks.arn
+    }
+    resources = ["secrets"]
   }
 
   access_config {
@@ -38,9 +56,6 @@ resource "aws_eks_cluster" "this" {
   depends_on = [aws_iam_role_policy_attachment.cluster]
 }
 
-# ---------------------------------------------------------------------------
-# Node group
-# ---------------------------------------------------------------------------
 resource "aws_iam_role" "nodes" {
   name = "${var.cluster_name}-eks-nodes"
 
@@ -90,17 +105,38 @@ resource "aws_eks_node_group" "general" {
 
   depends_on = [aws_iam_role_policy_attachment.nodes]
 
-  # Let cluster-autoscaler manage desired_size without a Terraform diff.
+  # cluster-autoscaler owns desired_size.
   lifecycle {
     ignore_changes = [scaling_config[0].desired_size]
   }
 }
 
-# ---------------------------------------------------------------------------
-# Pod Identity Agent (used instead of IRSA for service-account IAM)
-# ---------------------------------------------------------------------------
 resource "aws_eks_addon" "pod_identity" {
   cluster_name  = aws_eks_cluster.this.name
   addon_name    = "eks-pod-identity-agent"
   addon_version = var.pod_identity_addon_version
+}
+
+# Access entries map IAM principals to EKS-managed access policies (replaces aws-auth).
+resource "aws_eks_access_entry" "this" {
+  for_each = var.access_entries
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value.principal_arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "this" {
+  for_each = var.access_entries
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value.principal_arn
+  policy_arn    = each.value.policy_arn
+
+  access_scope {
+    type       = each.value.access_scope.type
+    namespaces = each.value.access_scope.type == "namespace" ? each.value.access_scope.namespaces : null
+  }
+
+  depends_on = [aws_eks_access_entry.this]
 }

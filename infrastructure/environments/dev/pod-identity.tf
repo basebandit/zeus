@@ -1,12 +1,8 @@
-# Pod Identity roles for the in-cluster platform components. These are pure AWS
-# (no Kubernetes providers), so they live in the cluster root. The service
-# accounts they bind to are created later by ArgoCD when it installs the
-# external-secrets and image-updater Helm charts — Pod Identity associations by
-# (namespace, service account) name work regardless of creation order.
+# Pod Identity roles for external-secrets and image-updater. Pure AWS, so they
+# live in the cluster root; the service accounts are created later by ArgoCD.
 
 data "aws_caller_identity" "current" {}
 
-# External Secrets: read ArgoCD/app config from this account's SecretsManager.
 data "aws_iam_policy_document" "external_secrets" {
   statement {
     effect = "Allow"
@@ -32,7 +28,6 @@ module "external_secrets_irsa" {
   inline_policy_json = data.aws_iam_policy_document.external_secrets.json
 }
 
-# ArgoCD Image Updater: read this account's ECR (images replicate here from shared).
 module "image_updater_irsa" {
   source = "../../modules/pod-identity-role"
 

@@ -1,6 +1,4 @@
-# User application parameters, consumed by the dev-apps ApplicationSet
-# (install/dev/appsets.yaml). Env-agnostic: the ApplicationSet supplies the repo,
-# revision, ECR registry, image-updater annotations, and values-<env>.yaml.
+# Params for the dev-apps ApplicationSet (env-agnostic; appset adds repo, registry, values-<env>.yaml).
 name: payments
 namespace: payments
 path: charts/payments

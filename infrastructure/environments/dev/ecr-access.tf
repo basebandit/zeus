@@ -1,12 +1,4 @@
-# Cross-account ECR (dev side)
-#
-# Images live in the shared account and are replicated into this account by the
-# shared account's aws_ecr_replication_configuration. This registry policy grants
-# the shared account permission to create the replica repositories and push the
-# replicated images. Once replicated, the node group pulls same-account (its
-# AmazonEC2ContainerRegistryReadOnly is enough) and ArgoCD Image Updater watches
-# this account's own registry.
-
+# Lets the shared account replicate images into this account's ECR.
 data "aws_iam_policy_document" "ecr_replication" {
   statement {
     sid    = "AllowSharedAccountReplication"

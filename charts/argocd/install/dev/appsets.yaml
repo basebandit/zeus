@@ -1,17 +1,8 @@
-# Values for the argocd-apps Helm chart, installed once by Terraform (the dev
-# bootstrap root). This is the only thing Terraform renders into ArgoCD; from
-# here ArgoCD owns everything.
-#
-# It creates:
-#   - projects:        dev-platform (third-party tools) + dev-apps (user apps)
-#   - applications:    platform-root  -> app-of-apps over charts/argocd/platform/*
-#   - applicationsets: dev-apps       -> one Application per charts/argocd/apps/*.yaml
-#
-# See charts/argocd/README.md for the full chain.
+# argocd-apps chart values, installed by Terraform. Creates the projects, the
+# platform app-of-apps, and the dev-apps ApplicationSet. See ../../README.md.
 
 projects:
-  # Third-party / opensource cluster tools. Broad: they install CRDs and other
-  # cluster-scoped resources across the external-secrets and argocd namespaces.
+  # Third-party tools — broad (CRDs, cluster-scoped, external-secrets + argocd ns).
   dev-platform:
     namespace: argocd
     finalizers:

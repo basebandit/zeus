@@ -5,7 +5,7 @@ How dev gets from "empty cluster" to "everything running", and where to add thin
 ## The chain
 
 ```
-Terraform (infrastructure/environments/dev/bootstrap)
+Terraform (infrastructure/environments/dev/argocd)
   └─ installs argo-cd            (values: install/dev/argocd-values.yaml)
   └─ installs argocd-apps chart  (values: install/dev/appsets.yaml)
         ├─ AppProjects:  dev-platform, dev-apps

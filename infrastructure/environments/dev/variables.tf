@@ -9,11 +9,6 @@ variable "dev_account_id" {
   type        = string
 }
 
-variable "bootstrap_role_arn" {
-  description = "ARN of the GHA bootstrap role in the Shared Services account. Get this from: cd shared-services && terraform output bootstrap_role_arn"
-  type        = string
-}
-
 # --- ArgoCD -----------------------------------------------------------------
 variable "argocd_repo_url" {
   description = "Git URL ArgoCD pulls manifests from."
@@ -22,6 +17,28 @@ variable "argocd_repo_url" {
 }
 
 # --- Workload: EKS ----------------------------------------------------------
+variable "cluster_public_access_cidrs" {
+  description = "CIDRs allowed to reach the EKS public API endpoint (e.g. your home/office IP /32). Set in terraform.tfvars; must not be 0.0.0.0/0."
+  type        = list(string)
+}
+
+variable "cluster_admin_role_arn" {
+  description = "IAM principal (Identity Center admin permission-set role) granted EKS cluster-admin. Set in terraform.tfvars."
+  type        = string
+}
+
+variable "developer_role_arn" {
+  description = "IAM principal (Identity Center developer permission-set role) granted namespace-scoped read-only. Null until the team grows."
+  type        = string
+  default     = null
+}
+
+variable "app_namespaces" {
+  description = "Namespaces developers get read-only (view) access to."
+  type        = list(string)
+  default     = ["orders", "payments"]
+}
+
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster."
   type        = string
@@ -54,20 +71,3 @@ variable "shared_account_id" {
   type        = string
 }
 
-variable "ecr_account_id" {
-  description = "AWS account ID that owns the ECR repositories ArgoCD Image Updater watches. Defaults to the shared account."
-  type        = string
-  default     = null
-}
-
-variable "ecr_region" {
-  description = "Region of the ECR repositories."
-  type        = string
-  default     = "eu-central-1"
-}
-
-variable "ecr_pull_role_arn" {
-  description = "Cross-account role in the ECR-owning account that the image-updater assumes for ECR read/auth. Null for same-account ECR."
-  type        = string
-  default     = null
-}

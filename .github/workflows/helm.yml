@@ -26,13 +26,9 @@ jobs:
           version: latest
 
       - name: Helm lint
-        run: |
-          set -euo pipefail
-          for c in charts/argocd/platform/cluster-secret-store charts/orders charts/payments; do
-            [ -f "$c/Chart.yaml" ] && { echo "== lint $c =="; helm lint "$c"; }
-          done
+        run: helm lint charts/argocd/platform/cluster-secret-store charts/orders charts/payments
 
-      - name: Helm render (region templating)
+      - name: Helm render
         run: helm template csstore charts/argocd/platform/cluster-secret-store --set region=eu-central-1 >/dev/null
 
       - name: YAML lint (argocd manifests)
