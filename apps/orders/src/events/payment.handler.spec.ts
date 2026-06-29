@@ -56,10 +56,7 @@ describe('PaymentEventHandler', () => {
 
       await handler.handlePaymentCompleted(message);
 
-      expect(orderService.handlePaymentCompleted).toHaveBeenCalledWith(
-        'order-123',
-        'payment-123',
-      );
+      expect(orderService.handlePaymentCompleted).toHaveBeenCalledWith('order-123', 'payment-123');
     });
 
     it('should throw error on invalid message', async () => {
@@ -86,13 +83,9 @@ describe('PaymentEventHandler', () => {
         content: Buffer.from(JSON.stringify(event)),
       };
 
-      orderService.handlePaymentCompleted.mockRejectedValue(
-        new Error('Order not found'),
-      );
+      orderService.handlePaymentCompleted.mockRejectedValue(new Error('Order not found'));
 
-      await expect(handler.handlePaymentCompleted(message)).rejects.toThrow(
-        'Order not found',
-      );
+      await expect(handler.handlePaymentCompleted(message)).rejects.toThrow('Order not found');
     });
   });
 

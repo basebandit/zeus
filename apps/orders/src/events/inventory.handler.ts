@@ -13,13 +13,9 @@ export class InventoryEventHandler {
 
   async handleInventoryReserved(message: any): Promise<void> {
     try {
-      const event: InventoryReservedEvent = JSON.parse(
-        message.content.toString(),
-      );
+      const event: InventoryReservedEvent = JSON.parse(message.content.toString());
 
-      this.logger.log(
-        `Processing inventory.reserved event for order ${event.orderId}`,
-      );
+      this.logger.log(`Processing inventory.reserved event for order ${event.orderId}`);
 
       // Update order to record inventory reservation
       // This can be extended to store reservationId in order_events
@@ -40,20 +36,14 @@ export class InventoryEventHandler {
 
   async handleInventoryReservationFailed(message: any): Promise<void> {
     try {
-      const event: InventoryReservationFailedEvent = JSON.parse(
-        message.content.toString(),
-      );
+      const event: InventoryReservationFailedEvent = JSON.parse(message.content.toString());
 
-      this.logger.log(
-        `Processing inventory.reservation_failed event for order ${event.orderId}`,
-      );
+      this.logger.log(`Processing inventory.reservation_failed event for order ${event.orderId}`);
 
       // Cancel the order due to insufficient inventory
       await this.orderService.cancelOrder(event.orderId);
 
-      this.logger.log(
-        `Order ${event.orderId} cancelled due to inventory reservation failure`,
-      );
+      this.logger.log(`Order ${event.orderId} cancelled due to inventory reservation failure`);
     } catch (error) {
       this.logger.error(
         `Failed to process inventory.reservation_failed event: ${error.message}`,

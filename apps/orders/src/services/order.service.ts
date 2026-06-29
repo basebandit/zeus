@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { AddToCartDto, CreateOrderDto } from '../dto/order.dto';
 import { Order, OrderEvent, OrderItem, OrderStatus } from '../entities/order.entity';
 import { EventService } from './event.service';
@@ -8,6 +8,9 @@ import { RedisService } from './redis.service';
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
+  private readonly inventoryUrl = process.env.INVENTORY_URL || 'http://localhost:8082';
+
   constructor(
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
@@ -86,12 +89,48 @@ export class OrderService {
     return savedCart;
   }
 
+  async updateCartItemQuantity(userId: string, itemId: string, quantity: number): Promise<Order> {
+    const cart = await this.orderRepository.findOne({
+      where: { userId, status: OrderStatus.CART },
+      relations: ['items'],
+    });
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+    const item = cart.items.find((i) => i.id === itemId);
+    if (!item) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    if (quantity <= 0) {
+      // Treat a non-positive quantity as a removal.
+      await this.orderItemRepository.delete({ id: itemId });
+      cart.items = cart.items.filter((i) => i.id !== itemId);
+    } else {
+      item.quantity = quantity;
+      item.totalPrice = Number(item.unitPrice) * quantity;
+      await this.orderItemRepository.save(item);
+    }
+
+    cart.totalAmount = cart.items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+    const updatedCart = await this.orderRepository.save(cart);
+    await this.redisService.setCart(userId, updatedCart);
+
+    return updatedCart;
+  }
+
   async removeFromCart(userId: string, itemId: string): Promise<Order> {
-    const cart = await this.getCart(userId);
+    // Load the cart from the DB (not the cache) so we operate on a managed entity.
+    const cart = await this.orderRepository.findOne({
+      where: { userId, status: OrderStatus.CART },
+      relations: ['items'],
+    });
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
 
+    // Delete the line item directly, then recompute the cart total.
+    await this.orderItemRepository.delete({ id: itemId });
     cart.items = cart.items.filter((item) => item.id !== itemId);
     cart.totalAmount = cart.items.reduce((sum, item) => sum + Number(item.totalPrice), 0);
 
@@ -134,7 +173,19 @@ export class OrderService {
     // Publish event to message queue
     await this.eventService.publishOrderCreated(savedOrder);
 
-    // Clear cart if exists
+    // Clear the cart now that it has been converted into an order: remove the
+    // cart-status order (cascades to its items) and the cached copy.
+    const cart = await this.orderRepository.findOne({
+      where: { userId: dto.userId, status: OrderStatus.CART },
+      relations: ['items'],
+    });
+    if (cart) {
+      // Remove child items first: the FK has no ON DELETE CASCADE.
+      if (cart.items?.length) {
+        await this.orderItemRepository.remove(cart.items);
+      }
+      await this.orderRepository.remove(cart);
+    }
     await this.redisService.deleteCart(dto.userId);
 
     return savedOrder;
@@ -155,7 +206,8 @@ export class OrderService {
 
   async getUserOrders(userId: string, limit = 10, offset = 0): Promise<[Order[], number]> {
     const [orders, total] = await this.orderRepository.findAndCount({
-      where: { userId },
+      // A cart is an Order with status CART; it is not a placed order.
+      where: { userId, status: Not(OrderStatus.CART) },
       relations: ['items'],
       order: { createdAt: 'DESC' },
       take: limit,
@@ -195,6 +247,24 @@ export class OrderService {
     await this.eventService.publishOrderCancelled(order, 'payment_failed');
   }
 
+  async handleShipmentShipped(orderId: string, trackingNumber: string): Promise<void> {
+    const order = await this.getOrder(orderId);
+    order.status = OrderStatus.SHIPPED;
+    await this.orderRepository.save(order);
+
+    await this.recordEvent(orderId, 'order.shipped', { orderId, trackingNumber });
+    await this.eventService.publishOrderShipped(order, trackingNumber);
+  }
+
+  async handleShipmentDelivered(orderId: string): Promise<void> {
+    const order = await this.getOrder(orderId);
+    order.status = OrderStatus.DELIVERED;
+    await this.orderRepository.save(order);
+
+    await this.recordEvent(orderId, 'order.delivered', { orderId });
+    await this.eventService.publishOrderDelivered(order);
+  }
+
   async cancelOrder(orderId: string): Promise<Order> {
     const order = await this.getOrder(orderId);
 
@@ -220,10 +290,22 @@ export class OrderService {
     await this.orderEventRepository.save(event);
   }
 
-  // Mock function - in real implementation, call inventory service
+  // Fetch the authoritative unit price from the Inventory service.
   private async getProductPrice(productId: string): Promise<number> {
-    // This should call the Inventory Service API
-    // For now, return mock price
-    return 29.99;
+    try {
+      const res = await fetch(`${this.inventoryUrl}/api/v1/products/${productId}`);
+      if (!res.ok) {
+        throw new Error(`inventory responded ${res.status}`);
+      }
+      const product = (await res.json()) as { price?: number | string };
+      const price = Number(product?.price);
+      if (!Number.isFinite(price) || price < 0) {
+        throw new Error(`invalid price for product ${productId}`);
+      }
+      return price;
+    } catch (error) {
+      this.logger.error(`Failed to fetch price for product ${productId}: ${error}`);
+      throw new BadRequestException(`Unable to price product ${productId}`);
+    }
   }
 }

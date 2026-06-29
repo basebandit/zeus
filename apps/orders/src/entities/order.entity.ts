@@ -42,16 +42,22 @@ export class Order {
   @Column({ type: 'uuid', nullable: true, name: 'payment_id' })
   paymentId: string | null;
 
-  @Column({ type: 'jsonb', name: 'shipping_address' })
+  @Column({ type: 'jsonb', name: 'shipping_address', nullable: true })
   shippingAddress: {
     street: string;
     city: string;
     state: string;
     zipCode: string;
     country: string;
-  };
+  } | null;
 
-  @OneToMany(() => OrderItem, (item) => item.order, { cascade: true, eager: true })
+  @OneToMany(() => OrderItem, (item) => item.order, {
+    cascade: true,
+    eager: true,
+    // Removing an item from the collection and saving deletes its row
+    // (order_items.order_id is NOT NULL, so the default "nullify" would fail).
+    orphanedRowAction: 'delete',
+  })
   items: OrderItem[];
 
   @CreateDateColumn({ name: 'created_at' })

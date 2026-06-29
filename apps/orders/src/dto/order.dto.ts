@@ -1,4 +1,4 @@
-import { IsUUID, IsNumber, IsString, IsEnum, IsObject, ValidateNested, Min } from 'class-validator';
+import { IsUUID, IsNumber, IsString, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderStatus } from '../entities/order.entity';
@@ -73,6 +73,17 @@ export class RemoveFromCartDto {
 
   @IsUUID()
   itemId: string;
+}
+
+export class UpdateCartItemDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'User UUID' })
+  @IsUUID()
+  userId: string;
+
+  @ApiProperty({ example: 3, description: 'New quantity for the cart line', minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  quantity: number;
 }
 
 export class OrderResponseDto {

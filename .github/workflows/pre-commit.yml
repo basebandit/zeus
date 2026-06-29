@@ -1,0 +1,55 @@
+name: pre-commit
+
+# Cross-cutting code-quality gate (whitespace, EOF, YAML/TOML, payments lint hooks).
+# On a PR it runs only on the files that PR changed, so feedback is fast and a PR is
+# never blocked by drift in code it didn't touch. On push to main it sweeps all files
+# as a drift guard. Terraform hooks are owned by terraform.yml (which installs the
+# proper tooling), so they're skipped here to avoid duplication. Developers get the
+# full suite locally via `pre-commit install`.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  SKIP: terraform_fmt,terraform_tflint
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need the base ref to diff changed files
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Add uv to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run pre-commit
+        run: |
+          python -m pip install pre-commit
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pre-commit run --show-diff-on-failure \
+              --from-ref "origin/${{ github.base_ref }}" --to-ref HEAD
+          else
+            pre-commit run --all-files --show-diff-on-failure
+          fi

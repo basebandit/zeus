@@ -97,7 +97,7 @@ class RabbitMQService:
         """
         await self.publish_event(
             routing_key="payment.completed",
-            event=event.model_dump(mode="json"),
+            event=event.model_dump(mode="json", by_alias=True),
         )
 
     async def publish_payment_failed(self, event: PaymentFailedEvent):
@@ -109,7 +109,7 @@ class RabbitMQService:
         """
         await self.publish_event(
             routing_key="payment.failed",
-            event=event.model_dump(mode="json"),
+            event=event.model_dump(mode="json", by_alias=True),
         )
 
 

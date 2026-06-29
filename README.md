@@ -1,4 +1,50 @@
-# AWS EKS Cluster Setup ( with ArgoCD for GitOps)
+# Zeus — Event-Driven E-commerce on EKS (GitOps)
+
+This repository contains both the **platform** (an Amazon EKS cluster provisioned with Terraform and
+bootstrapped with ArgoCD for GitOps) and the **e-commerce application** it runs: a set of
+event-driven microservices plus a TanStack Start storefront.
+
+---
+
+## 🛍️ E-commerce Application (`apps/`)
+
+A polyglot, event-driven shop. Services communicate over a shared **RabbitMQ** topic exchange
+(`basebandit.events`) and coordinate an order **saga** (currently event-choreographed; see
+[`apps/orders/SAGA_PATTERN.md`](apps/orders/SAGA_PATTERN.md), with a planned migration to Temporal).
+
+| Service | Stack | Port | Responsibility |
+|---|---|---|---|
+| `web` | TypeScript / TanStack Start | 3000 | Storefront UI + BFF (calls the gateway only) |
+| `gateway` | Go / Gin | 8081 | Single public edge: JWT validation, identity forwarding, routing |
+| `auth` | Java / Spring Boot | 8084 | Registration, login, JWT issuance; publishes `user.registered` |
+| `orders` | TypeScript / NestJS | 8080 | Cart, order lifecycle, **saga orchestrator** |
+| `inventory` | Go / Gin | 8082 | Product catalog, stock reservation |
+| `payments` | Python / FastAPI | 8083 | Payment processing |
+| `shipping` | Python / FastAPI | 8085 | Fulfillment; owns `shipment.*` events |
+| `notifications` | Java / Spring Boot | 8086 | Email on order/user events (via MailHog locally) |
+
+```
+Browser ─► web (SSR + BFF) ─► gateway (JWT edge) ─► auth │ orders │ inventory │ payments │ shipping
+                                                     └──── RabbitMQ basebandit.events ────► notifications
+```
+
+Order flow: `order.created → inventory.reserved → payment.completed → order.confirmed →
+shipment.shipped → order.shipped → (delivery) → order.delivered`, with compensation on
+inventory/payment failure → `order.cancelled`.
+
+### Run the whole stack locally
+
+```bash
+docker compose up --build          # all services + RabbitMQ + MailHog + per-service Postgres
+./apps/inventory/seed-products.sh        # seed a 20-item demo catalog (with images)
+```
+
+Then open the storefront at http://localhost:3000 (RabbitMQ UI :15672, MailHog :8025). Each service
+also has its own `docker-compose.yml` and `README.md` for isolated development.
+
+---
+
+## ☁️ Platform (Terraform + ArgoCD)
 
 This project provisions a development platform on Amazon EKS cluster using Terraform. The setup includes VPC networking, EKS control plane, worker nodes, and bootstrapping ArgoCD for GitOps workflows.
 
